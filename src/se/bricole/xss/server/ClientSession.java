@@ -196,7 +196,7 @@ public class ClientSession extends Thread implements XMLClient {
     }
 
 
-    public synchronized void send(Document doc) throws IOException {
+    public void send(Document doc) throws IOException {
 	send(XMLUtil.documentToString(doc));
     }
 
@@ -207,7 +207,7 @@ public class ClientSession extends Thread implements XMLClient {
      * String.getBytes(). There is room for improvement here.
      *
      */
-    public synchronized void send(String s) throws IOException {
+    public void send(String s) throws IOException {
 	if (socket == null || input == null || output == null) {
 	    throw new IOException("Some I/O object is null (socket: " + socket + 
 				  ", input: " + input + ", output: " + output + ")");
