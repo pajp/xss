@@ -46,6 +46,7 @@ class XMLCommandParser implements CommandParser {
 	    try {
 		//Server.debug(client, "instantiating stateful module " + c.toString());
 		handler = (XMLSessionTagHandler) c.newInstance();
+		handler.setProperties((Properties) configuration.statefulModuleProperties.get(c));
 		handler.init(proxy, client);
 		if ((handler.TYPE & Module.WILDCARD) == Module.WILDCARD) {
 		    gsfModules.add(handler);
@@ -67,6 +68,9 @@ class XMLCommandParser implements CommandParser {
 			     + ": "
 			     + illegalAccessException.getMessage()); 
 
+	    } catch (ModuleException moduleException) {
+		moduleException.printStackTrace();
+		Server.fatal(moduleException.toString());
 	    }
 	}
 

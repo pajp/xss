@@ -53,6 +53,9 @@ class GenericXMLModule implements XMLTagHandler {
 	if (e.getTagName().equals("auth")) {
 	    Properties attr = new Properties();
 	    String domain = e.getAttribute("domain");
+	    if (e.hasAttribute("sid")) {
+		attr.setProperty("sid", e.getAttribute("sid"));
+	    }
 	    if (domain == null || domain.equals("")) {
 		attr.setProperty("message", "no \"domain\" attribute");
 		client.send(XMLUtil.simpleTag("auth-error", attr));
@@ -111,8 +114,17 @@ class GenericXMLModule implements XMLTagHandler {
 		}
 
 		try {
+
 		    MessageDigest md = MessageDigest.getInstance("MD5");
 		    byte[] serverBytes = md.digest(string);
+		    
+		    StringBuffer serverDataBuf =
+			new StringBuffer();
+		    for (int i=0; i < serverBytes.length; i++) {
+			serverDataBuf.append(Integer.toString(serverBytes[i], 16));
+		    }
+		    String serverData = serverDataBuf.toString();
+
 		    boolean success = MessageDigest.isEqual(clientMD5bytes,
 							    serverBytes);
 		    if (success) {
@@ -122,6 +134,9 @@ class GenericXMLModule implements XMLTagHandler {
 			attr.setProperty("domain", domain);
 			client.send(XMLUtil.simpleTag("auth-ok", attr));
 		    } else {
+			Server.debug("Authentication failed: got " + clientMD5 + 
+				     ", expected: " + serverData);
+				     
 			attr.setProperty("message", "access denied by authenticator");
 			attr.setProperty("domain", domain);
 			client.send(XMLUtil.simpleTag("auth-error", attr));

@@ -64,7 +64,7 @@
              started by putting the logic in the Flash apps instead of the
              server.
         -->
-        <BroadcastUnhandledTags>true</BroadcastUnhandledTags>
+        <BroadcastUnhandledTags>false</BroadcastUnhandledTags>
 
 	<GlobalModuleProperties>
             <Property name="globalEcho"   value="false"/>
@@ -155,6 +155,19 @@
                 <Module source="classpath" name="se.bricole.xss.modules.ConfigBasedAuthenticator">
                     <Property name="domains" value="xss.system" />
                     <Property name="password.admin" value="xssAdmin" />
+                </Module>
+
+                <Module source="classpath" name="se.minmejl.xss.IMAPAuthenticator" />
+
+                <Module source="classpath" name="se.minmejl.xss.MailSession"
+                        authentication="minmejl"
+                        authentication-type="reject"
+                        authentication-method="md5">
+                    <Property name="mail.store.protocol" value="imap" />
+                    <Property name="mail.transport.protocol" value="smtp" />
+                    <Property name="mail.host" value="laroy.mrfriday.com" />
+                    <Property name="imap.host" value="laroy.mrfriday.com" />
+                    <Property name="imap.default-folder" value="INBOX" />
                 </Module>
 	</Modules>
 </XSSConfig>

@@ -54,6 +54,7 @@ public class Configuration extends java.util.Properties {
     Map authHandlers = new HashMap();
 
     Vector statefulModules = new Vector(); // XXX: Why Vector?
+    Map statefulModuleProperties = new HashMap();
     
     List statelessWildcardModules = new LinkedList();
     List statefulWildcardModules = new LinkedList();
@@ -402,6 +403,9 @@ public class Configuration extends java.util.Properties {
 		if ((moduleType & Module.WILDCARD) == Module.WILDCARD) {
 		    associateWildcard(m, auth, authType, authMethod, properties);
 		}
+	    }
+	    if ((moduleType & Module.SESSION) == Module.SESSION) {
+		statefulModuleProperties.put(c, properties);
 	    }
 
 	    if ((moduleType & Module.AUTH) == Module.AUTH) {
