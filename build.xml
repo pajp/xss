@@ -25,6 +25,7 @@
     <javadoc sourcepath="${project.src}" destdir="${project.dir}/docs"
              Public="true" Author="true" Use="true"
              windowtitle="Bricole XSS ${project.version} API documentation" >
+
       <bottom><![CDATA[<i>Copyright &#169; 2001-2003 <a href="http://www.bricole.se/">Bricole datakonsulttj&auml;nster</a></i>]]></bottom>
       <packageset dir="${project.src}" />
       <group title="XSS standard classes" packages="se.bricole.xss.*" />
@@ -47,6 +48,7 @@
            debug="${project.compiler.debug}"
            optimize="${project.compiler.optimization}"
            deprecation="${project.compiler.deprecation}"
+           compiler="jikes"
      >
         <classpath>
           <pathelement location="${project.libs}/js.jar"/>
