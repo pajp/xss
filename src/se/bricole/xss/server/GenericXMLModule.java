@@ -117,6 +117,7 @@ class GenericXMLModule implements XMLTagHandler {
 							    serverBytes);
 		    if (success) {
 			client.authenticatedTo(domain);
+			client.setProperty("auth." + domain + ".username", username);
 			attr.setProperty("message", "access granted by authenticator");
 			attr.setProperty("domain", domain);
 			client.send(XMLUtil.simpleTag("auth-ok", attr));
