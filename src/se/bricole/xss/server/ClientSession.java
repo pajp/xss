@@ -570,14 +570,23 @@ public class ClientSession extends Thread implements XMLClient {
 			    queue.wait();
 			}
 			while (queue.size() > 0) {
-			    session.send((String) queue.removeFirst());
+			    try {
+				session.send((String) queue.removeFirst());
+			    } catch (IOException ex1) {
+				Server.warn("I/O error in AsynchSender for " + session + 
+					    ": " + ex1.toString());
+				ex1.printStackTrace();
+				if (queue.size() > 0) {
+				    Server.warn("AsynchSender for " + session + " discarding " + 
+						queue.size() + " messages.");
+				    queue.clear();
+				}
+			    }
 			}
 		    }
 		}
 	    } catch (InterruptedException ex2) {
 		if (!shutdown) exception = ex2;
-	    } catch (IOException ex1) {
-		exception = ex1;
 	    }
 
 	    if (exception != null) {
