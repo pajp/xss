@@ -17,7 +17,7 @@ import org.apache.xerces.dom.DocumentImpl;
  */
 class XMLCommandParser implements CommandParser {
 
-    public final static String vcId = "$Id: XMLCommandParser.java,v 1.5 2002/09/12 00:54:52 pipeman Exp $";
+    public final static String vcId = "$Id$";
 
     private DocumentBuilder db;
     ClientProxy proxy;

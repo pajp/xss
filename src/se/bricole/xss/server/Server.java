@@ -20,11 +20,11 @@ import java.awt.event.*;
  * allocating incoming connections as well as garbage-collecting old ClientProxies and
  * idle clients.
  *
- * @version $Id: Server.java,v 1.5 2002/09/14 17:07:42 gray Exp $
+ * @version $Id$
  */
 public class Server implements SessionEventListener, Runnable, ServerManager {
 
-    public final static String vcId = "$Id: Server.java,v 1.5 2002/09/14 17:07:42 gray Exp $";
+    public final static String vcId = "$Id$";
 
     public final static int VERSION_MAJOR = 0;
     public final static int VERSION_MINOR = 9;

@@ -23,7 +23,7 @@ import org.w3c.dom.Document;
  */
 public class ClientSession extends Thread {
 
-    public final static String vcId = "$Id: ClientSession.java,v 1.4 2002/09/12 00:00:34 pipeman Exp $";
+    public final static String vcId = "$Id$";
 
     static final boolean broadcastUnknownXML = false;
 
@@ -176,6 +176,17 @@ public class ClientSession extends Thread {
     private void setId(int id) {
 	proxyId = id;
     }
+
+    public void sendAsynch(Document doc)
+    throws IOException {
+	send(doc);
+    }
+
+    public void sendAsynch(String s) 
+    throws IOException {
+	send(s);
+    }
+
 
     public synchronized void send(Document doc) throws IOException {
 	send(XMLUtil.documentToString(doc));
@@ -376,6 +387,13 @@ public class ClientSession extends Thread {
 	} catch (ParserException pe) {
 	    Server.warn(this.toString() + " failed to initialize parser");
 	}
+
+	synchronized (sessionEventListeners) {
+	    Iterator si = sessionEventListeners.iterator();
+	    while (si.hasNext()) {
+		((SessionEventListener) si.next()).clientStart(this);
+	    }
+	}
     }
 
     Vector sessionEventListeners = new Vector(1);	
@@ -386,7 +404,10 @@ public class ClientSession extends Thread {
      * object.
      */
     public void addSessionEventListener(SessionEventListener c) {
-	sessionEventListeners.add(c);
+	synchronized (sessionEventListeners) {
+	    if (!sessionEventListeners.contains(c))
+		sessionEventListeners.add(c);
+	}
     }
 
     boolean delayedFinishInProgress = false;

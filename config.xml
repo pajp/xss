@@ -1,8 +1,8 @@
 <XSSConfig>
-	<ListenPort>8085</ListenPort>
+	<ListenPort>8086</ListenPort>
 	<ListenAddress>0.0.0.0</ListenAddress>
-	<UsersPerProxy>40</UsersPerProxy>
-	<ProxiesPerServer>50</ProxiesPerServer>
+	<UsersPerProxy>10</UsersPerProxy>
+	<ProxiesPerServer>1</ProxiesPerServer>
 	<GCInterval>20</GCInterval>
 	<PrintStatus>0</PrintStatus>
 	<MaxPingTime>60</MaxPingTime>
@@ -16,15 +16,16 @@
 	</GlobalModuleProperties>
 
 	<Modules>
-                <!-- Module source="classpath" name="se.bricole.xss.modules.CaesarFilter" -->
-                    <!-- Property name="direction" value="outbound" / -->
-                <!-- /Module -->
+                <Module source="classpath" name="se.bricole.xss.modules.CaesarFilter">
+                    <Property name="direction" value="outbound" />
+                </Module>
 		<Module source="classpath" name="se.bricole.xss.server.GenericXMLModule"/>
                 <Module source="classpath" name="se.bricole.xss.server.ECMAScriptModule">
                     <Property name="scriptDirectory" value="ecmascripts" />
                     <Property name="autoReload" value="true" />
                     <Property name="autoRescan" value="true" />
                 </Module>
+                <Module source="classpath" name="nu.dll.redbull.GameSession" />
 
                 <Module source="classpath" name="se.minmejl.xss.IMAPAuthenticator" />
                 <Module source="classpath" name="se.minmejl.xss.MailSession"

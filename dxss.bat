@@ -8,7 +8,7 @@ set BASEPATH=C:\info\dev-xss2\xss
 
 set CONFIG=%BASEPATH%\config.xml
 set DEBUG=false
-set XSSCLASSES=%BASEPATH%\classes;C:\info\dev-minmejl\tech\java-classes
+set XSSCLASSES=%BASEPATH%\classes;C:\info\dev-minmejl\tech\java-classes;c:\info\dev-redbull\java-classes
 set LIBPATH=%BASEPATH%\jars
 
 IF "%1" == "/DEBUG" (

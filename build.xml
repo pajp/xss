@@ -9,7 +9,7 @@
 <project name="xss" default="server" basedir=".">
   <target name="init">
     <tstamp/>
-    <property name="project.version" value="0.9.2"/>
+    <property name="project.version" value="0.9.3"/>
     <property name="project.name" value="XSS"/>
     <property name="project.dir"  value="${basedir}"/>
     <property name="project.src"  value="${basedir}/src"/>
@@ -76,7 +76,19 @@
     </copy>
   </target>
 
-  <target name="dist" depends="init,server,copy">
+  <target name="jar" depends="init,server,copy">
+	<mkdir dir="${project.dir}/dist/jars" />
+	<jar destfile="${project.dir}/dist/jars/xsserver.jar"
+		 basedir="${project.dir}/classes"
+		 excludes="*.java">
+	  <manifest>
+      	<attribute name="Built-By" value="${user.name}"/>
+		<attribute name="Main-Class" value="se.bricole.xss.server.Server"/>
+	  </manifest>
+	</jar>
+  </target>
+
+  <target name="dist" depends="init,server,jar,copy">
     <!-- delete dir="${project.dir}/dist"/ -->
     <mkdir dir="${project.dir}/dist"/>
 
@@ -89,15 +101,6 @@
 
     <copy file="${project.dir}/config.xml.dist" tofile="${project.dir}/classes/se/bricole/xss/default-config.xml" />
 	
-	<mkdir dir="${project.dir}/dist/jars" />
-	<jar destfile="${project.dir}/dist/jars/xsserver.jar"
-		 basedir="${project.dir}/classes"
-		 excludes="*.java">
-	  <manifest>
-      	<attribute name="Built-By" value="${user.name}"/>
-		<attribute name="Main-Class" value="se.bricole.xss.server.Server"/>
-	  </manifest>
-	</jar>
     <mkdir dir="${project.dir}/dist/docs"/>
     <copy todir="${project.dir}/dist/docs">
       <fileset dir="${project.dir}/docs" />

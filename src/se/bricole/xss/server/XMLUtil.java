@@ -21,11 +21,11 @@ import java.sql.ResultSetMetaData;
  *
  * Creation date: (2001-04-17 21:04:10)
  * @author Rasmus Sten
- * @version $Id: XMLUtil.java,v 1.3 2002/09/12 00:00:34 pipeman Exp $
+ * @version $Id$
 */
 public class XMLUtil {
 
-    public final static String vcId = "$Id: XMLUtil.java,v 1.3 2002/09/12 00:00:34 pipeman Exp $";
+    public final static String vcId = "$Id$";
     
     public static Element appendResultSetToNode(Element root, String rowTag, ResultSet rs)
     throws SQLException {
@@ -91,13 +91,14 @@ public class XMLUtil {
      */
     public static String simpleTag(String tagName, Properties attributes)
 	throws DOMException {
-	Enumeration names = attributes.propertyNames();
 	Document doc = new DocumentImpl();
 	Element root = doc.createElement(tagName);
-
-	while (names.hasMoreElements()) {
-	    String property = (String) names.nextElement();
-	    root.setAttribute(property, attributes.getProperty(property));
+	if (attributes != null) {
+	    Enumeration names = attributes.propertyNames();
+	    while (names.hasMoreElements()) {
+		String property = (String) names.nextElement();
+		root.setAttribute(property, attributes.getProperty(property));
+	    }
 	}
 
 	doc.appendChild(root);
@@ -107,5 +108,12 @@ public class XMLUtil {
     public static Document newXML()
     throws DOMException {
 	return new DocumentImpl();
+    }
+
+    public static Element newXML(String name) {
+	Document d = newXML();
+	Element e = d.createElement(name);
+	d.appendChild(e);
+	return e;
     }
 }

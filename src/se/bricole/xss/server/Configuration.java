@@ -22,11 +22,11 @@ import java.util.LinkedList;
 /**
  * Handles loading of configuration and modules.
  *
- * $Id: Configuration.java,v 1.6 2002/09/14 17:08:29 gray Exp $
+ * $Id$
  */
 public class Configuration extends java.util.Properties {
 
-    public final static String vcId = "$Id: Configuration.java,v 1.6 2002/09/14 17:08:29 gray Exp $";
+    public final static String vcId = "$Id$";
 
     Object moduleRegistryLock = new Object();
 

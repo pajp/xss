@@ -2,6 +2,8 @@ package se.bricole.xss.server;
 
 import java.io.*;
 import java.util.*;
+import org.w3c.dom.Document;
+
 
 /**
  * 
@@ -14,12 +16,12 @@ import java.util.*;
  * certain ClientProxy can not access clients within other ClientProxy
  * objects. This is a way to isolate groups of clients in order to
  * limit both client and server bandwidth requirements (especially in
- * case of many broadcasts, such has chat rooms).</p>
+ * case of many broadcasts, such as chat rooms).</p>
  *
  */
 public class ClientProxy {
 
-    public final static String vcId = "$Id: ClientProxy.java,v 1.3 2002/09/12 00:00:34 pipeman Exp $";
+    public final static String vcId = "$Id$";
 
 
     Configuration configuration;
@@ -44,7 +46,9 @@ public class ClientProxy {
      * @param	value	the hash value
      */
     public void addSharedObject(Object key, Object value) {
-	sharedData.put(key, value);
+	synchronized (sharedData) {
+	    sharedData.put(key, value);
+	}
     }
 
     /**
@@ -55,7 +59,9 @@ public class ClientProxy {
      * @returns	the object associated with <i>key</i>, or null if none exists.
      */
     public Object getSharedObject(Object key) {
-	return sharedData.get(key);
+	synchronized (sharedData) {
+	    return sharedData.get(key);
+	}
     }
 
 
@@ -111,7 +117,9 @@ public class ClientProxy {
     }
 
     /**
-     * Returns an Enumeration containing all ClientConnection objects associated with this ClientProxy.
+     * Returns an Iterator containing all ClientConnection objects associated with this ClientProxy.
+     * The Iterator returned is backed by a new copy of the actual client list, so there is no 
+     * need for synchronization.
      */
     public Iterator getClients() {
 	List _clientList = new LinkedList();
@@ -148,8 +156,7 @@ public class ClientProxy {
 			 + ")"); 
     }
 
-    protected ClientProxy(
-			  int id, 
+    protected ClientProxy(int id, 
 			  SessionEventListener listener, 
 			  Configuration config, 
 			  Server server) {
@@ -160,10 +167,12 @@ public class ClientProxy {
     }
     
     protected void add(ClientSession c) {
-	checkIntegrity();
-	clients.add(c);
-	clientCount++;
-	listener.clientStart(c);
+	synchronized (clients) {
+	    checkIntegrity();
+	    clients.add(c);
+	    clientCount++;
+	    listener.clientStart(c);
+	}
     }	
         
     /**
@@ -175,7 +184,11 @@ public class ClientProxy {
      */
     public void broadcast(ClientSession source, String s) {
 	broadcast(source, s, false);
-    }	
+    }
+
+    public void broadcast(ClientSession source, Document document) {
+	broadcast(source, XMLUtil.documentToString(document));
+    }
         
     /**
      * <p>Broadcasts a message to all clients that belongs to this ClientProxy. The <i>override</i>
@@ -188,34 +201,64 @@ public class ClientProxy {
      */
     public void broadcast(ClientSession source, String s, boolean override) {
 	checkIntegrity();
-	Enumeration e = clients.elements();
-
-	int count = 0;
-	while (e.hasMoreElements()) {
-	    ClientSession client = (ClientSession) e.nextElement();
-
-	    if (client == source || (!override && !client.getReceiveBroadcasts())) {
-		continue;
+	synchronized (clients) {
+	    Iterator i = clients.iterator();
+	    int count = 0;
+	    while (i.hasNext()) {
+		ClientSession client = (ClientSession) i.next();
+		
+		if (client == source || (!override && !client.getReceiveBroadcasts())) {
+		    continue;
+		}
+		
+		try {
+		    client.sendAsynch(s);
+		} catch (IOException ex) {
+		    Server.warn("Error sending to " + client.toString());
+		}
+		count++;
 	    }
-
-	    try {
-		client.send(s);
-	    } catch (IOException ex) {
-		Server.warn("Error sending to " + client.toString());
-	    }
-	    count++;
+	    broadcastCount++;
 	}
-	broadcastCount++;
+    }
+
+    public void send(ClientSession source, List targets, Document doc)
+    throws IOException {
+	send(source, targets, doc, false);
+    }
+
+    public void send(ClientSession source, List targets, Document doc, boolean sendToSource)
+    throws IOException {
+	checkIntegrity();
+	synchronized (targets) {
+	    Iterator i = targets.iterator();
+	    while (i.hasNext()) {
+		Object _client = i.next();
+		if (!sendToSource && _client == source) continue;
+
+		if (!(_client instanceof ClientSession)) {
+		    throw new IllegalArgumentException("Target list contained object of type " +
+						       _client.getClass().getName());
+		}
+
+		ClientSession client = (ClientSession) _client;
+		if (client == source && !sendToSource) continue;
+		client.sendAsynch(doc);
+
+	    }
+	}
     }
         
     /**
      * Request that the specified ClientConnection is deferenced.
      */
     protected void remove(ClientSession c) {
-	if (clients.contains(c)) {
-	    checkIntegrity();
-	    clients.remove(c);
-	    clientCount--;
+	synchronized (clients) {
+	    if (clients.contains(c)) {
+		checkIntegrity();
+		clients.remove(c);
+		clientCount--;
+	    }
 	}
 	//listener.clientStop(c);
     }
