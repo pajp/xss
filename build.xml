@@ -9,7 +9,7 @@
 <project name="xss" default="server" basedir=".">
   <target name="init">
     <tstamp/>
-    <property name="project.version" value="0.9-NOTYETRELEASED"/>
+    <property name="project.version" value="0.9"/>
     <property name="project.name" value="XSS"/>
     <property name="project.dir"  value="${basedir}"/>
     <property name="project.src"  value="${basedir}/src"/>
@@ -32,10 +32,16 @@
       <group title="Example classes" packages="com.example" />
       <classpath>
         <pathelement location="${project.libs}/js.jar"/>
+        <pathelement location="${project.libs}/xml4j.jar"/>
+        <pathelement location="${project.libs}/xerces.jar"/>
         <pathelement path="${java.class.path}/"/>
         <pathelement path="${additional.path}"/>
       </classpath>
     </javadoc>
+
+    <copy todir="${project.dir}/webpage/new/apidocs">
+      <fileset dir="${project.dir}/docs" />
+    </copy>
 
 
   </target>
@@ -51,6 +57,8 @@
            compiler="jikes"
      >
         <classpath>
+          <pathelement location="${project.libs}/xml4.jar"/>
+          <pathelement location="${project.libs}/xerces.jar"/>
           <pathelement location="${project.libs}/js.jar"/>
           <pathelement path="${java.class.path}/"/>
           <pathelement path="${additional.path}"/>
@@ -68,18 +76,34 @@
     </copy>
   </target>
 
-  <target name="dist" depends="init,server,copy,javadoc">
+  <target name="dist" depends="init,server,copy">
+    <!-- delete dir="${project.dir}/dist"/ -->
     <mkdir dir="${project.dir}/dist"/>
 
+	<!--
     <mkdir dir="${project.dir}/dist/classes"/>
     <copy todir="${project.dir}/dist/classes">
       <fileset dir="${project.classes}" />
     </copy>
+	-->
 
+    <copy file="${project.dir}/config.xml.dist" tofile="${project.dir}/classes/se/bricole/xss/default-config.xml" />
+	
+	<mkdir dir="${project.dir}/dist/jars" />
+	<jar destfile="${project.dir}/dist/jars/xsserver.jar"
+		 basedir="${project.dir}/classes"
+		 excludes="*.java">
+	  <manifest>
+      	<attribute name="Built-By" value="${user.name}"/>
+		<attribute name="Main-Class" value="se.bricole.xss.server.Server"/>
+	  </manifest>
+	</jar>
     <mkdir dir="${project.dir}/dist/docs"/>
     <copy todir="${project.dir}/dist/docs">
       <fileset dir="${project.dir}/docs" />
     </copy>
+	
+	
 
     <mkdir dir="${project.dir}/dist/bin"/>
     <copy todir="${project.dir}/dist/bin">
@@ -107,6 +131,44 @@
     <copy file="${project.dir}/TODO" todir="${project.dir}/dist" />
     <copy file="${project.dir}/ASL.txt" todir="${project.dir}/dist" />
     <copy file="${project.dir}/config.xml.dist" tofile="${project.dir}/dist/config.xml" />
+
+	<signjar jar="${project.dir}/dist/jars/xsserver.jar" storepass="asdasdasd" alias="rasmus" />
+	
+	<mkdir dir="${project.dir}/release" />
+
+	
+	<exec executable="makensis">
+		<arg value="${project.dir}/xss.nsi" />
+	</exec>
+	
+	<delete file="${project.dir}/release/bricole_xss-${project.version}.jar" />
+	<jar destfile="${project.dir}/release/bricole_xss-${project.version}.jar"
+		 basedir="${project.dir}/classes">
+	  <manifest>
+      	<attribute name="Built-By" value="${user.name}"/>
+		<attribute name="Main-Class" value="se.bricole.xss.server.Server"/>
+		<attribute name="Class-Path" value="jars/xsserver.jar jars/js.jar jars/xerces.jar jars/xml4j.jar jars/fesi.jar"/>
+	  </manifest>
+	</jar>
+
+	<signjar jar="${project.dir}/release/bricole_xss-${project.version}.jar" storepass="asdasdasd" alias="rasmus" />
+
+	<delete file="${project.dir}/bricole_xss-${project.version}.zip" />
+	<zip destfile="${project.dir}/release/bricole_xss-${project.version}.zip" 
+		 basedir="${project.dir}/dist">
+	</zip>
+
+	<delete file="${project.dir}/bricole_xss-${project.version}.tar" />
+	<tar destfile="${project.dir}/bricole_xss-${project.version}.tar" 
+		 basedir="${project.dir}/dist">
+	</tar>
+
+    <gzip src="${project.dir}/bricole_xss-${project.version}.tar"
+		  zipfile="${project.dir}/release/bricole_xss-${project.version}.tar.gz" />
+		  
+    <bzip2 src="${project.dir}/bricole_xss-${project.version}.tar"
+		   zipfile="${project.dir}/release/bricole_xss-${project.version}.tar.bz2" />
+	
   </target>
 
   <!-- compile the server and copy class files to 'classes' dir -->

@@ -1,7 +1,6 @@
-
-!define VERSION "0.9-NOTYETRELEASED"
+!define VERSION "0.9"
 Name "Bricole XML Session Server ${VERSION}"
-OutFile bricole-xss-win32-installer.exe
+OutFile release\bricole-xss-win32-installer.exe
 InstallDir C:\XSS
 InstallDirRegKey HKLM SOFTWARE\Bricole\XSS "Install_Dir"
 DirText "Please choose a destination directory for Bricole XSS."

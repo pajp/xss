@@ -38,7 +38,9 @@ FOR %%f IN (%LIBPATH%\*.jar) DO (
     set XSS_CP=!XSS_CP!;%%f
 )
 
+echo on
 %JAVA_HOME%\bin\java -Dxss.debug=%DEBUG% -cp %XSS_CP% se.bricole.xss.server.Server %CONFIG%
+@echo off
 
 goto clean
 :bail

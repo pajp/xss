@@ -14,15 +14,20 @@
 	<b>Description:</b> The chat module lets users send messages,
 	either in public or in private, and get information about
 	other users.<br />
-	<b>XML tags</b>: <code>&lt;register/&gt;</code>,
-	<code>&lt;privmsg/&gt;</code>,
-	<code>&lt;pubmsg/&gt;</code>,
-	<code>&lt;quit/&gt;</code>,
-	<code>&lt;who/&gt;</code>,
-	<code>&lt;whois/&gt;</code>,
-	<code>&lt;echo/&gt;</code>,
-	<code>&lt;store/&gt;</code>,
-	<code>&lt;get/&gt;</code>
+	<b>XML request tags</b>:
+	<code>&lt;<a href="#tag-register">register</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-privmsg">privmsg</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-pubmsg">pubmsg</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-quit">quit</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-who">who</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-whois">whois</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-echo">echo</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-store">store</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-get">get</a>/&gt;</code><br />
+	<b>XML asynchronous tags</b>:
+	<code>&lt;<a href="#tag-asynch-privmsg">privmsg</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-asynch-pubmsg">pubmsg</a>/&gt;</code>
+	
       </p>
       <h3>XML request tag documentation</h3>
       <p>The request tags are commands that can be sent to the
@@ -32,7 +37,7 @@
 	queried.
       </p>
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-register"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;register [sid=""]
 	              nickname=""
                       realname=""
@@ -59,7 +64,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-privmsg"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;privmsg [sid=""]
 	              to=""
                       message=""
@@ -84,7 +89,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-pubmsg"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;pubmsg [sid=""]
                       message=""
                       /&gt;</code></b><br />
@@ -105,7 +110,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-quit"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;quit
                       /&gt;</code></b><br />
 	Unregisters the user. If the GenericXMLModule is loaded,
@@ -118,7 +123,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-who"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;who
                       /&gt;</code></b><br />
 	Queries the server for a list of all registered chat users.<br />
@@ -144,7 +149,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-echo"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;echo [any data]
                       /&gt;</code></b><br />
 	An arbitrary broadcast to all other connected clients. The tag
@@ -157,7 +162,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-store"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;store 
 	    name=""
 	    value=""
@@ -182,7 +187,7 @@
 
 
       <p class="tag-doc">
-	<font size="+1">XML request</font><br />
+	<a name="tag-get"><font size="+1">XML request</font><br /></a>
 	<b><code>&lt;get
 	    name=""
                       /&gt;</code></b><br />
@@ -207,7 +212,7 @@
       <p>Asynchronous XML tags are messages that are sent unsolicited
 	from the server.</p>
       <p class="tag-doc">
-	<font size="+1">XML message</font><br />
+	<a name="tag-asynch-pubmsg"><font size="+1">XML message</font></a><br />
 	<b><code>&lt;pubmsg [sid=""]
                       message=""
 	              from=""
@@ -220,7 +225,7 @@
       </p>
 
       <p class="tag-doc">
-	<font size="+1">XML message</font><br />
+	<a name="tag-asynch-privmsg"><font size="+1">XML message</font><br /></a>
 	<b><code>&lt;privmsg [sid=""]
                       message=""
 	              from=""

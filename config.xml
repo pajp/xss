@@ -64,7 +64,7 @@
              started by putting the logic in the Flash apps instead of the
              server.
         -->
-        <BroadcastUnhandledTags>false</BroadcastUnhandledTags>
+        <BroadcastUnhandledTags>true</BroadcastUnhandledTags>
 
 	<GlobalModuleProperties>
             <Property name="globalEcho"   value="false"/>
@@ -125,6 +125,23 @@
                     <Property name="scriptDirectory" value="ecmascripts" />
                     <Property name="autoReload" value="true" />
                     <Property name="autoRescan" value="true" />
+                </Module>
+
+                <Module source="classpath" name="se.bricole.xss.modules.DatabaseAccess">
+                    <Property name="jdbcDriver" value="com.mysql.jdbc.Driver" />
+                    <Property name="jdbcURL" value="jdbc:mysql://localhost:3306/test" />
+                    <Property name="jdbcUsername" value="root" />
+                    <Property name="jdbcPassword" value="torskENTZ" />
+                    <Property name="queryFile" value="dbqueries.prp" />
+                </Module>
+
+                <Module source="classpath" name="se.bricole.xss.modules.DatabaseAccess">
+                    <Property name="jdbcDriver" value="com.mysql.jdbc.Driver" />
+                    <Property name="jdbcURL" value="jdbc:mysql://localhost:3306/guestbook" />
+                    <Property name="jdbcUsername" value="demo" />
+                    <Property name="jdbcPassword" value="demo" />
+                    <Property name="queryFile" value="extras/gbqueries.prp" />
+                    <Property name="prefix" value="gb" />
                 </Module>
                 <Module source="classpath" name="se.bricole.xss.server.ECMAScriptModule"
                         authentication="xss.system"

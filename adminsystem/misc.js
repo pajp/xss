@@ -14,6 +14,9 @@ function myOnXML(session, proxy, element) {
   if (name == "list-connections") {
     return listConnections(session, proxy, element);
   }
+  if (name == "disconnect") {
+    return disconnect(session, proxy, element);
+  }
   return false;
 }
 
@@ -44,8 +47,28 @@ function shutdown(session, proxy, element) {
   proxy.getConfiguration().shutdown();
 }
 
+function disconnect(session, proxy, element) {
+  var id = element.getAttribute("id");
+  var client = proxy.getClient(parseInt(id));
+  var doc = XMLUtil.newXML();
+  if (client) {
+    var e = doc.createElement("disconnect-ack");
+    doc.appendChild(e);
+    e.setAttribute("id", id);
+    session.send(doc);
+    client.send(doc);
+    client.finish();
+  } else {
+    var e = doc.createElement("disconnect-nack");
+    doc.appendChild(e);
+    session.send(doc);
+  }
+  return true;
+}
+
 
 this.tags = new Array();
 this.tags[0] = "shutdown";
 this.tags[1] = "list-connections";
+this.tags[2] = "disconnect";
 this.onXML = myOnXML;

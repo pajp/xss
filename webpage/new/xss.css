@@ -21,6 +21,13 @@ p {
   margin-bottom: 0.6em;
 }
 
+p.productDescription {
+	/*margin: 1em 1em 1em 1em;*/
+	padding: 1em 1em 1em 1em;
+	border: dotted;
+	width: 85%;"	
+}
+
 p.footnotes {
   font-size: x-small;
 }
@@ -59,6 +66,18 @@ p.tag-doc {
   margin-left: 1em;
 }
 
+ol.tag-doc { 
+  background: lightgrey;
+  margin-left: 1em;
+}
+
+.fromClient { 
+  color: green;
+}
+
+.fromServer { 
+  color: red;
+}
 
 .navigation {
   color: black;

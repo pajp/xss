@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server - developer's tutorial</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+    
+    <body>
+      <p class="header">Bricole XML Session Server</p>
+      <h1>XSS Developer's Tutorial</h2>
+      <p>
+	This tutoríal will describe the different aspects of
+	developing Flash applications that are communicating with XSS
+	in order to accomplish server-side tasks.
+      </p>
+	  
+	  <h2>Table of contents</h2>
+	  <p>
+	  
+	  <b>Note:</b> this tutorial is a work in progress. My ambition is
+	  that all chapters should be completed before the release of
+	  version 1.0 of the server software.
+	  
+	  <ul>
+	  	<li> <a href="#ch1">Chapter 1: simple broadcast-based 
+			 communication</a></li>
+		<li> Chapter 2: using the database module to access an SQL
+			 server</li>
+		<li> Chapter 3: implementing logic using Javascript</li>
+		<li> Chapter 4: implementing a stateless Java module</li>
+		<li> Chapter 5: implementing a session-bound Java module</li>
+	  </ul>
+	  
+	  </p>
+      
+	  <a name="ch1"></a>
+      <h2>Chapter 1: the simplest kind of communication</h2>
+      <p>
+	In this chapter, we will take a look at utilizing the basic
+	built-in functionalities of XSS together with a simple Flash
+	movie. You will need basic knowledge of handling Flash and
+	ActionScript. It also helps to have a basic understanding of
+	XML and XML programming (such as how the ActionScript XML
+	object works).
+
+      </p>
+      <h3>1.1 Prerequisites</h3>
+      <p>
+	To run this example, we need no special XSS modules loaded. We
+	will, however, use the BroadcastUnknownTags feature to let the
+	Flash movies send XML to each other via the server.
+      </p>
+      <p>
+	Throughout this tutorial, we will assume that the server is
+	running in a Windows operating system, is installed in the
+	directory <b>C:\XSS</b> and that the configuration file is
+	called <b>config.xml</b> and located in that directory. These
+	are also the defaults when installing XSS using the Windows
+	installer.
+      </p>
+      <p>
+	As mentioned in the first paragraph, we need to make sure that
+	the BroadcastUnknownTags feature is enabled. To do that, open
+	<b>C:\XSS\config.xml</b> with a text editor such as WordPad
+	and locate a line looking something like this:
+      </p>
+<pre class="example">
+    &lt;BroadcastUnhandledTags&gt;false&lt;/BroadcastUnhandledTags&gt;
+</pre>
+      <p>
+	Simply change from <code>false</code> to <code>true</code>
+	and then (re-)start the server.
+      </p>
+      <h3>1.2 Creating a GUI</h3>
+      <p>
+	We will now create the simplest possible chat. If you want to,
+	you can just skim through this paragraph and download the
+	sample file <a href="#sample-1">here</a>. <br/>
+
+	Start Flash and create a new
+	movie. Lay out two new text areas, one big for output, and a
+	small one one for input. Accordlingly, in the Properties
+	panel, set the text field type to "Dynamic text" for the
+	bigger output field, and "Input Text" for the small input
+	field. Also, we don't need to name the text fields themselves,
+	but we need to associate them with an ActionScript
+	variable. Enter "outputText" in the "Var:" box of the output
+	fields properties, and similarly, enter "inputText" in the
+	corresponding field for the input field. The last graphical
+	element we'll add is a small button. We'll be lazy and use one
+	of Flash's built-in. Open the "Window" menu and choose "Common
+	Libraries" -&gt; "Buttons". I like the "Pill button" found in
+	the "Component Buttons" folder. Drag it (or any other button
+	you fancy) onto the scene. Finally, you might want to put
+	borders around the text fields to make them visible. Select
+	them, and click the "Show Border" toggle-button in the
+	properties panel.
+
+      </p>
+      <p>
+	<a name="sample-1"></a>
+	Now, we have the bare GUI to start doing some scripting and
+	connect to the server. You can find our version of the file <a
+	  href="tutorial-flash/ch1-1.fla">ch1-1.fla</a> here.
+      </p>
+      <h3>1.3 Talking to XSS, part 1</h3>
+      <p>
+	Since this is a very
+	simple Flash movie, we won't take much care to make it very
+	structures. As for all the ActionScript, we'll create it in
+	frame one on our only layer. Bring up the Actions panel for
+	that frame and type:
+      </p><pre class="example">
+stop();
+var socket = new XMLSocket();
+var host = "localhost";
+var port = 8085;
+</pre>
+      <p>
+	The first line is just there to make sure the Flash movie
+	doesn't start to animate in case we happen to add more frames.
+	The remaining three lines defines the <code>socket</code>
+	object, which we'll use to communicate with the server, and
+	two variables, <code>host</code> and <code>port</code>, which
+	decide where to reach the server. In our case, on the same
+	machine as Flash is running on ("localhost"), and the standard
+	XSS port 8085. Now, we'll go on and define a function to make
+	it convenient for us to print out stuff on the big text area:
+      </p>
+<pre class="example">
+function println(message) {
+	outputText = outputText + message + "\n";	
+}
+</pre>
+      <p>
+	Now we'll add a function that takes care of connecting to the server:
+      </p>
+<pre class="example">
+function setupConnection() {
+	socket.onConnect = connectHandler;
+	socket.onXML = xmlHandler;
+	println("*** connecting to " + host + "...");
+	socket.connect(host, port);	
+}
+</pre>
+      <p>
+	As you can see, it actually does a bit more than just connect
+	to the server. It also sets up our handlers, or
+	<i>callbacks</i>, that will be called by the Flash engine to
+	notify us about connection details and incoming XML,
+	respectively. We do that by assigning the
+	<code>onConnect</code> and <code>onXML</code> properties of
+	the socket object to function names of our own. These
+	functions, <code>connectHandler</code> and
+	<code>xmlHandler</code> haven't been defined yet. We're just
+	about to do that, though:
+      </p>
+      <pre class="example">
+function connectHandler(success) {
+	if (success) {
+		println("*** Connect OK!");	
+	} else {
+		println("*** Connection failed. Is server down?");	
+	}
+}
+</pre>
+      <p>
+	The <code>connectHandler</code> function is pretty
+	straight-forward; the Flash engine calls it when the
+	connection to the server is up, or if it fails. To let us tell
+	the difference, it is also kind enough to give us a parameter,
+	which we have named <code>success</code>. This parameter will
+	be <code>true</code> if everthing went OK, or
+	<code>false</code> otherwise. So all we do here is check that
+	variable and translate it into something user-friendly to
+	print on the screen.
+      </p>
+      <p>
+	The next function we need to program is the one handling
+	incoming XML messages from the server, which we earlier named
+	<code>xmlHandler</code>. Again, we'll keep it very simple, and
+	only let it recognize one XML tag: <code>&lt;message/&gt;</code>.
+      </p>
+      <pre class="example">
+function xmlHandler(document) {
+	var element = document.firstChild;
+	if (element.nodeName == "message") {
+		println("Incoming message: " +
+				element.attributes.text);
+	} else {
+		println("*** Unknown XML tag: " + 
+				element.nodeName);
+	}
+}
+</pre>
+      <p>
+	Like our <code>onConnect</code> callback (the function
+	<code>connectHandler</code>), this one also receives one
+	parameter from Flash. This may contain a bit more
+	information: it contains the XML "document" (message) sent
+	from the server. It comes in the form of an <code>XML</code>
+	object. An XML object is the hierarchial representation of a
+	document with XML data, with methods and properties to access
+	and modify it. What interests us now is only the root element
+	and, if it's name is "message", one of it's attributes,
+	"text". Upon receipt of a &lt;message/&gt; tag, its "text"
+	attribute is printed out in the output field. If the tags name
+	isn't "message", a message is printed out telling the user
+	that we didn't recognize what the server sent.
+      </p>
+      <p>
+	Now, we'll add a single line calling our start function so
+	that the connection is made when the Flash movie starts:
+	<pre class="example">
+setupConnection();
+</pre>
+      </p>
+      <p>
+	We now have everything set up to connect to the server as well
+	as to read whatever it sends to us. To see what it all should
+	look like this far, check <a
+	  href="tutorial-flash/ch1-2.fla">the file ch1-2.fla</a>. The
+	next step lets us actually use the server, too!
+      </p>
+      <h3>1.4 Talking to XSS, part 2:</h3>
+      <p>
+	To be able to send a
+	message to the server, we'll have to assign a handler to the
+	button we have created. We'll just do as we normally do in
+	Flash, and assign a handler for the <code>release</code>
+	event - just select the button and bring up its Actions panel,
+	wherein you enter:
+      </p>
+      <pre class="example">
+on (release) {
+	_root.println("Sending message: " + _root.inputText);
+	_root.sendMessage(_root.inputText);
+	_root.inputText = "";
+}
+</pre>
+      <p>
+	All this action does is to call a function with the value
+	of the <code>inputText</code> variable as a parameter, and
+	then immediately clear that same label. Of course, the
+	function it's calling - <code>sendMessage()</code> - hasn't
+	been created yet. What it shall do is to take the message
+	we've given it, contruct an XML "document" out of it, and send
+	the document to the server. This is how it's done:
+      </p>
+      <pre class="example">
+function sendMessage(msg) {
+	var doc = new XML();
+	var e = doc.createElement("message");
+	e.attributes.text = msg;
+	doc.appendChild(e);
+	socket.send(doc);
+}
+</pre>
+      <p>
+	What we see here is the other end of handling a Flash XML
+	object: here we're creating an XML document instead of just
+	reading it, as we did in our <code>xmlHandler</code>
+	function. We create just one tag, &lt;message/&gt;, with one
+	attribute, "text", containing the data in our input text
+	field.
+      </p>
+      <p>
+	Now we are all set to send message to different Flash
+	clients through the server! To see it in action, export the
+	movie to an SWF file, and run multiple instances of it by
+	double-clicking on it several times. If you write a text in
+	one Flash movie and click the button, it will appear in the
+	others, which will receive it through the server.
+      </p>
+      <h3>1.5 Summary and finishing notes</h3>
+      <p>
+	We have now completed the first chapter in this tutorial,
+	which tought us the basic concepts and usage of the XML and
+	XMLSocket object. We utilized the XSS
+	<code>BroadcastUnhandledTags</code> feature to let all XML
+	messages pass through the server to any other connected
+	clients. As you can see, this is an easy way to quickly get
+	Flash clients talk to each other.
+	</p>
+      <p>
+	If you tried to use international characters, (for example the
+	scandinavian "&aring;"), you probably noticed that they turn
+	up weird on the receiving end. Don't worry, this is not a bug
+	in the server. However, to use international characters you
+	need to prefix all messages with an <i>XML declaration</i>,
+	telling it what character set you are using. Flash is using
+	UTF-8. To do this, add the following as the <i>second</i> line
+	of our <code>sendMessage()</code> function (right after
+	"<code>var doc = new XML();</code>"):
+	</p>
+	<pre class="example">
+doc.xmlDecl = "&lt;?xml version=\"1.0\" encoding=\"UTF-8\" ?&gt;";
+</pre>
+      <p>
+	Finally, our pre-cooked version of the result is available <a
+	  href="tutorial-flash/ch1-3.fla">in the file ch1-3.fla</a>.
+      </p>
+      
+    <p class="footer">
+      Copyright &copy; 2001 by Rasmus Sten &lt;<a
+	href="mailto:rasmus@bricole.se">rasmus@bricole.se</a>&gt;<br/>
+      <a href="http://www.macromedia.com/software/flash/">Flash</a>&reg; and
+      ActionScript are trademarks or registered trademarks of <a
+	href="http://www.macromedia.com">Macromedia&reg;, Inc</a> in the Unites
+      States and/or other countries.<br/>
+      <code>$Id: documentation.html,v 1.6 2003/06/30 09:23:28 rasmus $</code>
+    </p>
+  </body>
+</html>

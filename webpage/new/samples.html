@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+
+  <body>
+<h2>How it works</h2>
+<h3>the XSS Java module</h3>
+<p>
+   In XSS 1.0, there are two kinds of modules: session-modules and
+   stateless modules. <b>Session</b> modules are instantiated upon a
+   client connection and removed upon client disconnect. If each
+   client needs a large amount of client-specific stateful data, a
+   Session module might be a good idea. <b>Stateless</b> modules, on
+   the other hand, gets instantiated when the XSS server starts, and
+   lives through the life of the server <sup>1</sup>, each object being
+   shared by several clients.
+   </p>
+<p><b>Note:</b> ECMAScripts are all run as stateless modules. They do,
+however, have complete access to the <b>ClientSession</b> object,
+making it easy to maintain session data.</p>
+
+<h3>sample Javascript/ECMAScript</h3>
+<pre class="example"><b class="example">// Sample XSS script, helloworld.es</b>
+
+var count = 0;
+
+
+function test(session, proxy, element) {
+  var myXML = XMLUtil.newXML();
+  var element = myXML.createElement("message");
+  var count = proxy.getSharedObject("count");
+  if (!count) {
+    count = 0;
+  }
+  count++;
+  proxy.addSharedObject("count", count);
+  element.setAttribute("text", "hello, world " + count);
+  myXML.appendChild(element);
+  return myXML;
+}
+
+this.tag="hello";
+this.onXML = test;
+</pre>
+
+<h3>sample Java</h3>
+<p>
+<b>note:</b> the below example is based on the current development
+API. The actual module API in the release version may vary.
+</p>
+<pre class="example"><b class="example">/* SampleModule.java */</b>
+package com.example;
+
+import se.bricole.xss.server.*;
+import org.w3c.dom.*;
+import java.util.Properties;
+
+class SampleModule implements Module, XMLTagHandler {
+
+    public String[] getTagNames() { return { "counter" }; }
+
+    public SampleModule() {} <b class="example">// all modules needs a default constructor</b>
+
+    private static int counter = 0;
+
+    public boolean xmlTag(ClientConnection client,
+                          ClientProxy proxy,
+                          Element xml) {
+		  
+        if (e.getTagName().equals("counter")) {
+	    <b class="example">/* the ClientConnection.send(String) method sends
+	     * a null-terminated string of data to the client.
+	     * XMLUtils.simpleTag(String, Properties) is a static
+	     * method to make simple XML tags. The Properties argument
+	     * is used to build the attribute list of the XML tag.
+	     */</b>
+	    counter++;
+	    Properties p = new Properties();
+	    p.setProperty("count", ""+counter);
+             client.send(XMLUtils.simpleTag("counter-reply", p);
+	    proxy.serverBroadcast(client, <b class="example">// broadcast the new counter value</b>
+                                   XMLUtil.simpleTag("counter-update", p), true);
+	    return true;
+        }
+	return false; <b class="example">// tell XSS that the tag wasn't handled by this module</b>
+    }
+}
+</pre>
+<h3>sample XSS configuration file module directove</h3>
+<pre class="example">&lt;Modules&gt;
+    &lt;Module source="classpath" name="com.example.SampleModule"/&gt;
+&lt;/Modules&gt;</pre>
+
+
+<h3>sample Flash 5 ActionScript</h3>
+<pre class="example">function setupNetwork() { <b class="example">// run this function when the Flash movie starts</b>
+    var sock = new XMLSocket();
+    sock.onConnect = myOnConnect;
+    sock.onXML = myOnXML;
+    if (!sock.connect("server-hostname.example.com", 8085)) {
+       _root.counterField = "error!"; <b class="example">// first stage of connection went wrong, inform the user</b>
+    }
+    _root.sock = sock;
+    _root.connected = 0;
+}
+
+function myOnConnect(success) {
+    if (success) {
+        _root.connected = 1;
+        askServer(); <b class="example">// send XML query to server upon connect</b>
+    } else {
+        _root.counterField = "error!"; <b class="example">// connection refused or timed out (server unavailable)</b>
+    }
+}
+
+function myOnXML(xml) {
+    var e = xml.firstChild;
+    if (e.nodeName == "counter-reply" || e.nodeName == "counter-update") {
+        <b class="example">// react on the server output by, for example, updating a
+        // text field</b>
+        counterTextField = e.attributes.count;
+    }
+}
+
+function askServer() { <b class="example">// run this function upon, for example, a user click</b>
+    if (_root.connected != 1) {
+        <b class="example">// we have no connection yet, or the connect failed, tell the user</b>
+    }
+    var doc = new XML();
+    var tag = doc.createElement("counter");
+    doc.appendChild(tag);
+    _root.sock.send(doc);
+}
+
+setupNetwork();
+</pre>
+
+<h3>the counter module in action</h3>
+  <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+          codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0"
+          width="100" height="100" align="right">
+    <param name="movie" value="counter-sample.swf"/>
+    <param name="quality" value="high"/>
+    <param name="bgcolor" value="#FFFFFF"/>
+    <embed align="right" src="counter-sample.swf" quality="high"
+           bgcolor="#FFFFFF" width="100" height="100"
+	   type="application/x-shockwave-flash"
+	   pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+    </embed>
+  </object>
+<script language="JavaScript1.2">
+  var xoffset = 100;
+  var xfactor = 105;
+  var url = "counter-sample.html";
+  function openCounterWindow(factor) {
+      var x = factor * xfactor;
+      var w = window.open(url, "w" + x, "menubar=no,toolbar=no,width=100,height=100,screenX=" + x + ",screenY=100");
+      w.moveTo(x, 100);
+  }
+
+  function counterWindows() {
+    var x = 100;
+    for (var i = 0; i < 6; i++) {
+        setTimeout("openCounterWindow(" + i + ")", i*3000);
+    }
+  }
+</script>
+<p>
+To the right is a live example of the above sample counter module. If
+the counter says "ERR!", the server is down or you are behind a
+firewall that is denying connections to port 8085. Note that the
+connection to the server is persistant as long as the Flash movie is
+active. Since the module requests updates to be broadcasted to all
+clients, the counter will be increased automatically if another user
+accesses the page while you are watching it. This can be demonstrated
+by <a href="javascript:counterWindows()">opening several windows with
+the counter</a> (each window opens with a three second delay to
+demonstrate the asynchronous updates). If you want to examine the
+source code more closely, the files are available below<sup>2</sup>:
+  <ul>
+    <li> <a href="example-modules.jar">JAR file containing Java classes and source code</a>
+    <li> <a href="counter-sample.fla">Shockwave Flash 5 FLA file</a>
+  </ul>
+Another live demo of the XSS is the <a target="_new" href="chat/index.html">XSS
+chat</a> (<a href="chat/chat_demo.fla">.FLA source
+available</a>). Note, however, that the Flash chat movie is heavily
+underdeveloped, and is only a very simple example of how to use the
+XSS Chat Module, included in the XSS distribution.
+</p>
+  </body>
+</html>
+
+

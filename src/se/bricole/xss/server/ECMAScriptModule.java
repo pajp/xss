@@ -74,8 +74,7 @@ public class ECMAScriptModule implements XMLTagHandler {
 		Server.warn("ECMAScriptModule: scriptDirectory == \"" + 
 			    scriptDirName + "\"");
 	    }
-	    scriptDirName = new File(new File(properties.getProperty("xss.config.file")).
-				     getParentFile(),
+	    scriptDirName = new File(new File(properties.getProperty("xss.base-directory")),
 				     scriptDirName).getAbsolutePath();
 	}
 

@@ -9,6 +9,12 @@ import java.util.HashSet;
 import java.util.Collections;
 import java.util.Iterator;
 
+import javax.swing.WindowConstants;
+import javax.swing.JFrame;
+import java.awt.Font;
+import javax.swing.JScrollPane;
+import java.awt.event.*;
+
 /**
  * This is the class containing the "main" method, and is responsible for accepting and
  * allocating incoming connections as well as garbage-collecting old ClientProxies and
@@ -208,14 +214,14 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      * Generic debug outputter.
      */
     public static final synchronized void debug(String s) {
-	if (debug) System.err.println(System.currentTimeMillis() + " [debug] " + s);
+	if (debug) println(System.currentTimeMillis() + " [debug] " + s);
     }
 
     /**
      * Output a status message to the standard log (in current implementation stdout)
      */
     public static synchronized void status(String s) {
-	System.out.println(System.currentTimeMillis() + " [status] " + s);
+	println(System.currentTimeMillis() + " [status] " + s);
     }
 
     /**
@@ -223,6 +229,66 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      */
     public static synchronized void warn(String s) {
 	debug("[warning] " + s);
+    }
+    
+    private static JFrame createFrame() {
+	JFrame frame = new JFrame();
+	frame.setSize(800,600);
+	frame.setVisible(true);
+	return frame;	
+    }
+    
+    
+    
+    
+    private static void initGUI() {
+	JFrame frame = createFrame();
+	console = new Console(25, 80);
+	console.setConsoleThingies("");
+	frame.getContentPane().add(new JScrollPane(console));
+	frame.setTitle("Bricole XML Session Server");
+	frame.setVisible(true);
+	frame.addWindowListener(new WindowAdapter() {	    
+	    public void windowClosing(WindowEvent e) {
+		status("Attempting shutdown...");
+		new Thread() {
+		    public void run() {
+			System.setOut(null);
+			System.setErr(null);
+			System.exit(0);
+		    }
+		}.start();
+	    }
+	});
+	frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+	frame.requestFocus();
+
+	console.setFont(new Font("monospaced", Font.PLAIN, 14));
+	System.setOut(new PrintStream(new LogOutputStream(console)));
+	
+	/*
+	console.addConsoleListener(this);
+	console.addComponentListener(new ComponentAdapter() {
+		public void componentResized(ComponentEvent e) {
+		    int rows = console.getRows();
+		    Debug.println("Changed console rows to " + rows);
+		    linesPerScreen = rows; // has no effect, never changes 
+		}
+	    });
+        */
+
+	System.setErr(new PrintStream(new LogOutputStream(console)));
+
+	
+    }
+    
+    
+    static boolean gui = false;
+    static Console console = null;
+    protected synchronized static  void println(String s) {
+	if (gui && console == null) initGUI();
+	System.out.println(s);
+	
     }
 
     /**
@@ -238,8 +304,16 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     public static void main(String[] argc) {
 	bootTime = System.currentTimeMillis();
 	status(PRODUCT_NAME + " " + getVersionString() + " starting up...");
-	if (argc.length < 1) fatal("need at least the name of a configuration file.");
-	new Server(argc[0]);
+	Server s = null;
+	gui = argc.length == 0;
+	if (argc.length < 1) {
+	    warn("No argument supplied - using default configuration.");
+	    s = new Server();
+	} else {
+	    s = new Server(argc[0]);
+	}
+	debug("using gui? " + gui);
+	debug("<-- main()");
     }
 
     Configuration config = null;
@@ -250,7 +324,23 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      */
     public Server(String configfile) {
 	this.configFile = configfile;
-	initServer(configfile);
+	initServer();
+	setupHooks();
+    }
+    
+    public Server() {
+	configFile = null;
+	initServer();
+	setupHooks();
+    }
+    
+    public Server(InputStream is) {
+	this.configFile = null;
+	initServer();
+	setupHooks();
+    }
+    
+    private void setupHooks() {
 	Runtime.getRuntime().addShutdownHook(new Thread() {
 		public void run() {
 		    if (!shutdown) {
@@ -258,10 +348,39 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		    }
 		}
 	    });
+	
+    }
+    
+    private void initServer() {
+	if (configFile == null) {
+	    
+	    try {
+		InputStream is = getClass().getClassLoader().
+			getResourceAsStream("se/bricole/xss/default-config.xml");
+		initServer(is);
+		is.close();
+	    } catch (IOException ex1) {
+		fatal("I/O error: " + ex1.getMessage());
+	    }	    
+	} else {
+	    initServer(configFile);
+	}
+	
+    }
+    
+    private void initServer(String configFileName) {
+	File f = new File(configFileName);
+	try {
+	    FileInputStream is = new FileInputStream(f);
+	    initServer(is);
+	    is.close();
+	} catch (IOException ex1) {
+	    fatal("I/O error: " + ex1.getMessage());
+	}
     }
 
-    private void initServer(String configfile) {
-	config = new Configuration(configfile, this);
+    private void initServer(InputStream is) throws IOException {
+	config = new Configuration(is, this, new File(File.separatorChar + "XSS"));
 	srv = null;
 	try {
 	    srv = new ServerSocket(config.getIntProperty("ListenPort"), 1000,
@@ -300,7 +419,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	Server.status("Nuking client threads...");
 	killPool();
 	Server.status("Re-initializing...");
-	initServer(configFile);
+	initServer();
 	Server.status("Server restart complete.");
     }
 
@@ -340,14 +459,6 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	    }
 	}
     }
-
-    /**
-     * XXX: gray: Is this obsolete? It's cannot be called! 
-     */
-    public Server() {
-	this("../cfg/xss-config.xml");
-    }
-
 
     protected synchronized ClientProxy findClientProxy()
     throws NoProxyAvailableException {

@@ -58,7 +58,8 @@ public class Configuration extends java.util.Properties {
     List statelessWildcardModules = new LinkedList();
     List statefulWildcardModules = new LinkedList();
 
-    File configFile = null;
+    protected File configFile = null;
+    protected File baseDir = null;
 
     ServerManager manager;
 
@@ -67,6 +68,26 @@ public class Configuration extends java.util.Properties {
 //     }
 
     public Configuration(String file, ServerManager manager) {
+	File f = new File(file);
+	configFile = f;
+	try {
+	    FileInputStream is = new FileInputStream(f);
+	    baseDir = f.getParentFile();
+	    initialize(is, manager);
+	    is.close();
+	} catch (FileNotFoundException ex2) {
+	    Server.fatal("Could not find configuration file \"" + f.getAbsolutePath() + "\"");
+	} catch (IOException ex1) {
+	    Server.fatal("I/O error reading configuration file: " + ex1.getMessage());
+	}
+    }
+
+    public Configuration(InputStream configStream, ServerManager manager, File baseDir) throws IOException {
+	this.baseDir = baseDir;
+	initialize(configStream, manager);
+    }
+    
+    private void initialize(InputStream configStream, ServerManager manager) throws IOException {
 	this.manager = manager;
 
 	/** default configuration **/
@@ -102,16 +123,12 @@ public class Configuration extends java.util.Properties {
 	DocumentBuilder db;
 
 	try {
-	    configFile = new File(file);
-	    BufferedReader in = new BufferedReader(new FileReader(configFile));
-	    Server.status("Reading configuration from file \"" + file + "\"");
+	    BufferedReader in = new BufferedReader(new InputStreamReader(configStream, "iso-8859-1"));
 	    String s = new String();
 	    while ((s = in.readLine()) != null)
 		data.append(s);
 
 	    in.close();
-	} catch (FileNotFoundException fnfe) {
-	    Server.fatal("File not found: " + file);
 	} catch (IOException ioe) {
 	    Server.fatal("I/O exception: " + ioe.getMessage());
 	}
@@ -128,9 +145,13 @@ public class Configuration extends java.util.Properties {
 	    NodeList configs = root.getChildNodes();
 	    Properties globalModuleProperties = new Properties();
 
+  	    globalModuleProperties.setProperty("xss.base-directory", baseDir.getAbsolutePath());
+
 	    // used by the ECMAScript module to find out where it 
 	    // should search for script directories.
-	    globalModuleProperties.setProperty("xss.config.file", configFile.getAbsolutePath());
+	    if (configFile != null) {
+		globalModuleProperties.setProperty("xss.config.file", configFile.getAbsolutePath());
+	    }
 	    for (int i = 0; i < configs.getLength(); i++) {
 		Node n = configs.item(i);
 		boolean _handled = false;
@@ -193,7 +214,7 @@ public class Configuration extends java.util.Properties {
 					String propFileName = ((Element) pn).getAttribute("name");
 					File propFile = new File(propFileName);
 					if (!propFile.exists()) {
-					    propFile = new File(configFile.getAbsolutePath(), propFileName);
+					    propFile = new File(baseDir, propFileName);
 					    if (!propFile.exists())
 						throw new IOException("Property file \"" +
 								      propFile + "\" not found");
@@ -236,13 +257,12 @@ public class Configuration extends java.util.Properties {
 		    Server.warn("Unknown configuration tag \"" + n.getNodeName() + "\"");
 	    } // for...
 
-	} catch (IOException ioe) {
-	    Server.fatal("I/O error: " + ioe.getMessage());
 	} catch (ParserConfigurationException ex) {
 	    Server.fatal("Initiating XML parser: " + ex.getMessage());
 	} catch (SAXException saxe) {
 	    Server.fatal("Parsing config file: " + saxe.getMessage());
 	}
+	
     }
 
     private void moduleLoadException(String name, String source, ModuleException me) {

@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server - DatabaseAccess</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+
+  <body>
+      <p class="header">Bricole XML Session Server</p>
+      <h2>The XSS Database Access Module</h2>
+      <h3>Overview</h3>
+      <p>
+	<b>Full name:</b> <code>se.bricole.xss.modules.DatabaseAccess</code><br />
+	<b>Description:</b>
+	The Database Access module provides a mechanism of accessing
+	any JDBC-compliant database from your Flash movie without
+	having to program anything else but the SQL queries you wish
+	to use. The SQL queries are provided in a separate property
+	file loaded by the module. The tags used to access the modules
+	are prefixed according to a configuration property, making it
+	possible to have multiple DatabaseAccess instances loaded for
+	accessing different databases (and perhaps with different
+	authentication requirements).
+	<br />
+	<b>XML tags</b>:
+	<code>&lt;<a href="#tag-executeQuery">prefix:executeQuery</a>/&gt;</code>,
+	<code>&lt;<a href="#tag-executeUpdate">prefix:executeUpdate</a>/&gt;</code>
+      </p>
+      <h3>Configuration</h3>
+      <p>
+	This module makes use of the following configuration
+	properties:<br>
+	<table>
+	  <tr><td><b>name</b></td><td><b>description</b></td></tr>
+	  <tr><td>jdbcDriver</td><td>The class name of a JDBC driver
+	      to use, example: <i>com.mysql.jdbc.Driver</i>.</td></tr>
+	  <tr><td>jdbcURL</td><td>The JDBC URL to use, example:
+	      <i>jdbc:mysql://localhost:3306/mydatabase</i></td></tr>
+	  <tr><td>jdbcUsername</td><td>The SQL user to connect as,
+	      example: <i>myuser</i></td></tr>
+	  <tr><td>jdbcPassword</td><td>The SQL password to use,
+	      example: <i>mysecretpassword</i></td></tr>
+	  <tr><td>queryFile</td><td>The SQL query property file to
+	      load SQL queries from, relative to the config.xml file,
+	      example: <i>sqlqueries.prp</i></td></tr>
+	  <tr><td valign="top">prefix</td><td>(Optional, default: <i>db</i>.) The
+	      tag prefix to use. This prefix is
+	      concatenated with a colon and the module tag
+	      names. Example: <i>gdb</i> makes the module register the
+	      tags <code>&lt;gdb:executeQuery/&gt;</code> and
+	      <code>&lt;gdb:executeUpdate/&gt;</code>.</td></tr>
+	  </table>
+
+	    
+      </p>
+      <h3>Defining SQL queries</h3>
+      <p>
+	SQL queries are defined in the file given by the configuration
+	property "queryFile" (see above). In general, the format of the
+	file is that of a standard Java property file. They are quite
+	simple and readable; in general each line corresponds a property
+	key and a value. The key and value can be separated by a line or
+	a colon. A line beginning with ! or # is ignored. For the exact
+	definition, se the Javadoc for <a
+	  href="http://java.sun.com/j2se/1.4.1/search.html">java.util.Properties.load()</a>.
+	A simple example of two SQL query definitions is:<br/>
+	<code>selectUsers: SELECT * FROM User<br/>
+	  updateThing: UPDATE stuff SET thing=10 WHERE thang=10<br/>
+	</code>
+	</p>
+      <p>
+	The actual SQL queries are defined as JDBC
+	<code>PreparedStatement</code>s, with one exception: the input parameter
+	data type must be specified for each parameter you wish to
+	use. In a JDBC <code>PreparedStatement</code>, you substitute
+	each variable parameter with a question mark
+	(<code>?</code>). In order for the module to know how to add
+	the parameter, you must complement the parameter with the
+	type. This is done by adding <code>{<i>type</i>}</code> where
+	<i>type</i> is a predefined type supported by this module. As
+	of XSS version 0.9, only two types are supported:
+	<code>String</code> and <code>int</code>. Thus, to demonstrate
+	a slightly more advanced example, the following query
+	definitions shows how to use parameters:<br/>
+      </p>
+      <pre>selectUser: SELECT * FROM User WHERE id = ?{int}
+updateUserPassword: UPDATE User SET password = ?{String} WHERE id = ?{int}</pre>
+      <p>
+	An example conversation between XSS and a Flash client
+	exercising the sample queries defined above could look like
+	this (<code class="fromClient">green</code> means data sent
+	from client, while <code class="fromServer">red</code> means
+	data sent from the server):<br/>
+	<br/>
+	<code class="fromClient">&lt;db:executeQuery query="selectUsers"/&gt;
+	</code><br>
+	<code class="fromServer">&lt;ResultSet&gt;&lt;Row id="1" user="admin"
+	  password="foobar" /&gt;&lt;Row id="2" user="johndoe"
+	  password="gazonk" /&gt;&lt;/ResultSet&gt;</code><br />
+	<code class="fromClient">&lt;db:executeQuery query="selectUser"
+	  var1="2"/&gt;</code><br/>
+	<code class="fromServer">&lt;ResultSet&gt;&lt;Row id="2"
+	  user="johndoe" password="gazonk"
+	  /&gt;&lt;/ResultSet&gt;</code><br/>
+	<code class="fromClient">&lt;db:executeUpdate
+	  query="updateUserPassword" var1="newpassword" var2="2"
+	  /&gt;</code><br/>
+	<code class="fromServer">&lt;UpdateResult
+	  affectedRows="1"/&gt;</code><br/>
+	<code class="fromClient">&lt;db:executeQuery query="selectUser"
+	  var1="2"/&gt;</code><br/>
+	<code class="fromServer">&lt;ResultSet&gt;&lt;Row id="2"
+	  user="johndoe" password="newpassword"
+	  /&gt;&lt;/ResultSet&gt;</code><br/>
+	</p>
+      <h3>XML request tag documentation</h3>
+      <p>The request tags are commands that can be sent to the
+	server. 
+      </p>
+
+      <p class="tag-doc">
+	<a name="tag-executeQuery">
+	  <font size="+1">XML request</font><br /></a>
+	<b><code>&lt;prefix:executeQuery query="<i>queryName</i>"
+	    [var1="<i>first query variable</i>"]
+	    [var2="<i>second query variable</i>"]
+	    [var3="<i>third query variable</i>"]
+	    [...]
+	    [var<i>N</i>="<i>Nth query variable</i>"]
+	    /&gt;</code></b><br />
+	Executes the query defined with name given in the <i>query</i>
+	using the given query parameters (<i>var1</i>, <i>var2</i>,
+	...), if any. The result is returned with a
+	<code>&lt;ResultSet/&gt;</code> root node, with one
+	<code>&lt;Row/&gt;</code> node for each row returned by the
+	query. Each column field in the returned row will be
+	represented by an attribute with the same name as the
+	column. For example, if you have a table <i>users</i>, with
+	three columns, <i>id</i>, <i>username</i> and <i>password</i>,
+	containing two rows, and execute the query <code>SELECT * FROM
+	  users</code>, the following XML will be generated:<br/>
+	<code>&lt;ResultSet&gt;&lt;Row id="1" user="admin"
+	  password="foobar" /&gt;&lt;Row id="2" user="johndoe"
+	  password="gazonk" /&gt;&lt;/ResultSet&gt;</code><br />
+	<br />
+	If an SQL error occurs (eg, invalid input type), no XML is
+	sent to the client.<br />
+	<br/>
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ResultSet&gt;&lt;Row
+	    column="<i>value</i>" .../&gt; ... &lt;ResultSet&gt;</code></b><br />
+      </p>
+
+      <p class="tag-doc">
+	<a name="tag-executeUpdate"><font size="+1">XML request</font><br /></a>
+	<b><code>&lt;prefix:executeUpdate
+	    query="<i>queryName</i>"
+	    [var1="<i>first query variable</i>"]
+	    [var2="<i>second query variable</i>"]
+	    [var3="<i>third query variable</i>"]
+	    [...]
+	    [var<i>N</i>="<i>Nth query variable</i>"]
+	    /&gt;</code></b><br />
+	Executes the <i>updating</i> query (ie. an SQL query that does
+	not return a ResultSet, such as <code>INSERT</code> or
+	<code>UPDATE</code> defined with name given in the
+	<i>query</i> using the given query parameters (<i>var1</i>, <i>var2</i>,
+	...), if any. Only the number of rows affected by the query is returned.
+	<br />
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;UpdateStatus affectedRows="<i>number
+	      of rows affeected by this query</i>"
+	    /&gt;</code></b><br />
+      </p>
+  </body>
+</html>

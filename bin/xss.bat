@@ -8,8 +8,8 @@ set BASEPATH=C:\XSS
 
 set CONFIG=%BASEPATH%\config.xml
 set DEBUG=false
-set XSSCLASSES=%BASEPATH%\classes
 set LIBPATH=%BASEPATH%\jars
+set XSSCLASSES=%BASEPATH%\classes
 
 IF "%1" == "/DEBUG" (
     set DEBUG=true
@@ -43,4 +43,5 @@ FOR %%f IN (%LIBPATH%\*.jar) DO (
 goto clean
 :bail
 echo Bailing out.
+pause
 :clean
