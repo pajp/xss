@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.LinkedList;
 
 import javax.swing.WindowConstants;
 import javax.swing.JFrame;
@@ -48,13 +50,15 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     Thread gcThread = null;
     Vector proxies = new Vector();
     ClientProxy proxy = null;
+    List gcHooks = new LinkedList();
 
     ClientSession[] threadPool;
     boolean growableThreadPool;
+    boolean createSpareThread;
     int oneShotThreads = 4;
 
     Set looseThreads = Collections.synchronizedSet(new HashSet());
-    public boolean shutdown = false;
+    private boolean shutdown = false;
         
     ServerSocket srv;
 
@@ -76,11 +80,11 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     }
 
     public void gc() {
-	_gc();
+	_gc(true);
     }
 
-    protected void _gc() {
-	boolean printStatus = config.getIntProperty("PrintStatus") == 1 ? true : false;
+    protected void _gc(boolean gentle) {
+	boolean printStatus = config.getBooleanProperty("PrintStatus");
 	long clientIdleTimeout = config.getIntProperty("ClientIdleTimeout") * 1000;
 
 	// fill up empty slots in the thread pool.
@@ -100,7 +104,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		threadPool[i].start();
 		filled++;
 		try {
-		    Thread.sleep(200);
+		    if (gentle) Thread.sleep(200);
 		    // sleep one fifth of a second to prevent bogging the server
 		} catch (InterruptedException interruptedException) {
 		}
@@ -168,6 +172,18 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	    }
 	}
 
+
+	runGCHooks();
+
+    }
+
+    private void runGCHooks() {
+	synchronized (gcHooks) {
+	    Iterator i = gcHooks.iterator();
+	    while (i.hasNext()) {
+		((GCHook) i.next()).gc();
+	    }
+	}
     }
 
     /**
@@ -202,6 +218,18 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	return System.currentTimeMillis() - bootTime;
     }
 
+    public void addGCHook(GCHook hook) {
+	synchronized (gcHooks) {
+	    gcHooks.add(hook);
+	}
+    }
+
+    public void removeGCHook(GCHook hook) {
+	synchronized (gcHooks) {
+	    gcHooks.remove(hook);
+	}
+    }
+
     /**
      *  Used to debug client communication. Prints out client information
      *  (ClientConnection.toString()) along with a timestamp and the supplied String to stdout.
@@ -214,7 +242,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      * Generic debug outputter.
      */
     public static final synchronized void debug(String s) {
-	if (debug) println(System.currentTimeMillis() + " [debug] " + s);
+	if (debug) println(System.currentTimeMillis() + " [dbg " + Thread.currentThread().getName() + "] " + s);
     }
 
     /**
@@ -285,7 +313,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     
     static boolean gui = false;
     static Console console = null;
-    protected synchronized static  void println(String s) {
+    protected synchronized static void println(String s) {
 	if (gui && console == null) initGUI();
 	System.out.println(s);
 	
@@ -312,8 +340,8 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	} else {
 	    s = new Server(argc[0]);
 	}
-	debug("using gui? " + gui);
-	debug("<-- main()");
+	//debug("using gui? " + gui);
+	//debug("<-- main()");
     }
 
     Configuration config = null;
@@ -390,28 +418,32 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	}
 
 	growableThreadPool = config.getIntProperty("GrowableThreadPool") == 1 ? true : false;
-                
+	createSpareThread = config.getBooleanProperty("CreateSpareThread");
 	maxProxies = config.getIntProperty("ProxiesPerServer");
 	usersPerProxy = config.getIntProperty("UsersPerProxy");
 
 	threadPool = new ClientSession[config.getIntProperty("InitialThreadPool")];
 
 	// code duplication.. the gc run() also does some of this
-	for (int i = 0; i < threadPool.length; i++) {
-	    threadPool[i] = new ClientSession(srv, this);
-	    threadPool[i].addSessionEventListener(this);
-	    threadPool[i].setPoolSlot(i);
-	    threadPool[i].start();
-	}
+// 	for (int i = 0; i < threadPool.length; i++) {
+// 	    threadPool[i] = new ClientSession(srv, this);
+// 	    threadPool[i].addSessionEventListener(this);
+// 	    threadPool[i].setPoolSlot(i);
+// 	    threadPool[i].start();
+// 	}
 
 	Thread gc = new Thread(this);
 	gc.setPriority(Thread.MIN_PRIORITY);
 	gc.setName("XSS-GarbageCollector");
 	gc.setDaemon(true);
+
+	// run the garbage collector once to fill the thread pool.
+	_gc(false);
+
 	gc.start();
 	gcThread = gc;
 
-	Server.status("all threads launched (" + threadPool.length + " threads in pool)"); 
+	Server.status("Server initialized.");
     }
 
     public void restart() {
@@ -431,10 +463,17 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     public void shutdown(boolean quitJVM) {
 	shutdown = true;
 	Server.status("Shutting down server!");
+	synchronized (proxies) {
+	    Iterator i = proxies.iterator();
+	    while (i.hasNext()) {
+		ClientProxy proxy = (ClientProxy) i.next();
+		proxy.broadcast(null, "<server-is-shutting-down-now/>", true);
+	    }
+	}
 	runGC = false;
 	gcThread.interrupt();
 	killPool();
-	Server.status("Shutdown complete (some threads may still be finishing).");
+	Server.status("Shutdown complete.");
 	if (quitJVM) System.exit(0);
     }
 
@@ -447,14 +486,27 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	} catch (IOException ex1) {
 
 	}
+
 	for (int i=0; i < threadPool.length; i++) {
-	    if (threadPool[i] != null && threadPool[i].isAlive()) {
- 		threadPool[i].interrupt();
-		Server.status("Waiting for thread " + i);
-		try {
-		    threadPool[i].finish();
-		    threadPool[i].join();
-		} catch (InterruptedException ex1) {
+	    threadPool[i].interrupt();
+	    threadPool[i].finish();
+	}
+
+	int deadThreads = 0;
+	while (deadThreads < threadPool.length) {
+	    deadThreads = 0;
+	    for (int i=0; i < threadPool.length; i++) {
+		if (threadPool[i] != null && threadPool[i].isAlive()) {
+		    Server.debug("Waiting for thread " + i);
+		    try {
+			threadPool[i].join();
+			Server.debug("Thread " + i + " has finished.");
+			deadThreads++;
+		    } catch (InterruptedException ex1) {
+		    }
+		} else {
+		    Server.debug("Thread " + i + " already dead.");
+		    deadThreads++;
 		}
 	    }
 	}
@@ -522,19 +574,23 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		t.setName("ThreadPoolManager");
 		t.start();
 	    } else {
-		Server.debug("thread pool is full, launching one-shot thread");
-		final ClientSession t = new ClientSession(srv, this);
-		t.setKeepAlive(false);
-		t.addSessionEventListener(this);
-		t.addSessionEventListener(new SessionEventListener() {
-			public void clientStart(ClientSession c) {}
+		if (createSpareThread) {
+		    Server.debug("thread pool is full, launching one-shot thread");
+		    final ClientSession t = new ClientSession(srv, this);
+		    t.setKeepAlive(false);
+		    t.addSessionEventListener(this);
+		    t.addSessionEventListener(new SessionEventListener() {
+			    public void clientStart(ClientSession c) {}
                             
-			public void clientStop(ClientSession s) {
-			    looseThreads.remove(t);
-			}
-		    });
-		looseThreads.add(t);
-		t.start();                        
+			    public void clientStop(ClientSession s) {
+				looseThreads.remove(t);
+			    }
+			});
+		    looseThreads.add(t);
+		    t.start();
+		} else if (clientCount == threadPool.length) {
+		    Server.warn("Warning: thread pool is full!");
+		}
 	    }
 	}
 		 
@@ -548,7 +604,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	       + (p != null ? ""+p.getClientCount() : "?")
 	       + " clients in "
 	       + (p != null ? p.toString() : "?")
-	       + ")."); 
+	       + ", " + clientCount + " total)."); 
     }
 
 

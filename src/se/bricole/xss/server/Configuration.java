@@ -105,7 +105,10 @@ public class Configuration extends java.util.Properties {
 	setProperty("ClientIdleTimeout", "3600");
 	setProperty("InitialThreadPool", "10");
 	setProperty("GrowableThreadPool", "0");
+	setProperty("CreateSpareThread", "false");
 	setProperty("BroadcastUnhandledTags", "false");
+	setProperty("EnableAsynchSend", "false");
+	setProperty("PrintStatus", "false");
 
 	String[] singleTextTags = 
 	{
@@ -113,7 +116,6 @@ public class Configuration extends java.util.Properties {
 	    "UsersPerProxy", 
 	    "ProxiesPerServer", 
 	    "GCInterval", 
-	    "PrintStatus", 
 	    "MaxPingTime", 
 	    "DieOnBadModule", 
 	    "ClientIdleTimeout", 
@@ -259,8 +261,15 @@ public class Configuration extends java.util.Properties {
 		    }
 
 		} // if (n.getNodeName().equals("Modules")) {
-		if (!_handled)
-		    Server.warn("Unknown configuration tag \"" + n.getNodeName() + "\"");
+		if (!_handled) {
+		    if (!containsKey(n.getNodeName())) {
+			Server.warn("Unknown configuration tag \"" + n.getNodeName() + "\"");
+		    } else {
+			Server.debug("Setting property \"" + n.getNodeName() + "\" to \"" + 
+				     n.getFirstChild().getNodeValue() + "\"");
+			setProperty(n.getNodeName(), n.getFirstChild().getNodeValue());
+		    }
+		}
 	    } // for...
 
 	} catch (ParserConfigurationException ex) {

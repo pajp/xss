@@ -64,6 +64,9 @@ public class ClientProxy {
 	}
     }
 
+    public Server getServer() {
+	return server;
+    }
 
 
     /**
@@ -88,11 +91,9 @@ public class ClientProxy {
 	return configuration;
     }
 
-    /**
-     * Sets the commandCount property.
-     */
-    protected void setCommandCount(int c) {
-	commandCount = c;
+
+    protected void incrementCommandCount(int c) {
+	commandCount += c;
     }
 
     /**
@@ -171,7 +172,6 @@ public class ClientProxy {
 	    checkIntegrity();
 	    clients.add(c);
 	    clientCount++;
-	    listener.clientStart(c);
 	}
     }	
         

@@ -24,7 +24,7 @@ import org.apache.xerces.dom.DocumentImpl;
  */
 class GenericXMLModule implements XMLTagHandler {
 
-    public final static String vcId = "$Id: GenericXMLModule.java,v 1.4 2002/09/12 00:54:52 pipeman Exp $";
+    public final static String vcId = "$Id$";
 
     public static final String[] tagNames = { "auth", "ping", "get-status", "quit" };
     
@@ -195,7 +195,8 @@ class GenericXMLModule implements XMLTagHandler {
 	    attr.setProperty("tag", "quit");
 	    attr.setProperty("message", "see ya");
 	    client.send(XMLUtil.simpleTag("ack", attr));
-	    client.delayedFinish();
+	    //client.delayedFinish();
+	    client.close();
 	    return true;
 	}
 	if (e.getTagName().equals("shutdown")) {
@@ -214,6 +215,24 @@ class GenericXMLModule implements XMLTagHandler {
 		statroot.setAttribute("yourProxy", "" + proxy.getId());
 		statroot.setAttribute("serverVersion", Server.getVersionString());
 		statroot.setAttribute("uptime", "" + proxy.getConfiguration().getUptime());
+
+		for (int i=0; i < proxy.server.threadPool.length; i++) {
+		    ClientSession sess = proxy.server.threadPool[i];
+		    Element threadE = replyDoc.createElement("thread");
+		    threadE.setAttribute("index", "" + i);
+		    //threadE.setAttribute("name", sess.getName());
+		    if (sess.socket != null) {
+			threadE.setAttribute("ip", sess.socket.getInetAddress().getHostAddress());
+		    }
+		    threadE.setAttribute("slot", "" + sess.poolSlot);
+		    threadE.setAttribute("id", "" + sess.getId());
+		    int proxyId = sess.proxy != null ? sess.proxy.getId() : -1;
+		    threadE.setAttribute("proxy-id", "" + proxyId);
+		    threadE.setAttribute("active", "" + sess.isActive());
+		    threadE.setAttribute("idle-time", "" + sess.getIdleTimeMillis());
+		    statroot.appendChild(threadE);
+		}
+
 		replyDoc.appendChild(statroot);
 
 		OutputFormat format = new OutputFormat(replyDoc);

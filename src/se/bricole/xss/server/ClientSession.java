@@ -9,6 +9,8 @@ import java.util.Hashtable;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.w3c.dom.Document;
 
@@ -33,6 +35,7 @@ public class ClientSession extends Thread {
     ServerSocket serverSocket = null;
     Server server = null;
     ClientProxy proxy = null;
+    AsynchSender asynchSender = null;
 
     private long lastSend = System.currentTimeMillis();
 
@@ -179,12 +182,16 @@ public class ClientSession extends Thread {
 
     public void sendAsynch(Document doc)
     throws IOException {
-	send(doc);
+	sendAsynch(XMLUtil.documentToString(doc));
     }
 
     public void sendAsynch(String s) 
     throws IOException {
-	send(s);
+	if (asynchSender != null) {
+	    asynchSender.enqueue(s);
+	} else {
+	    send(s);
+	}
     }
 
 
@@ -201,9 +208,10 @@ public class ClientSession extends Thread {
      */
     public synchronized void send(String s) throws IOException {
 	if (socket == null || input == null || output == null) {
-	    throw new IOException("Some I/O object is null");
+	    throw new IOException("Some I/O object is null (socket: " + socket + 
+				  ", input: " + input + ", output: " + output + ")");
 	}
-
+	Server.debug(Thread.currentThread(), "Sending: " + s);
 	output.write((s + "\000").getBytes("UTF-8"));
 	lastSend = System.currentTimeMillis();
     }
@@ -212,7 +220,7 @@ public class ClientSession extends Thread {
      * Closes the TCP socket associated with this ClientConnection
      */
     public void close() throws IOException {
-	socket.close();
+	if (socket != null) socket.close();
     }
 
     /**
@@ -247,13 +255,16 @@ public class ClientSession extends Thread {
      * Returns an identifying string.
      */
     public String toString() {
-	return "[CS id:"
-	    + proxyId
-	    + " proxy:"
-	    + (proxy != null ? proxy.getId() : -1)
-	    + " pooled:"
-	    + poolSlot
-	    + "]"; 
+	return "[CS<" + 
+	    Integer.toHexString(System.identityHashCode(this)) + "/" +
+	    proxyId + ">]";
+	// return "[CS id:"
+// 	    + proxyId
+// 	    + " proxy:"
+// 	    + (proxy != null ? proxy.getId() : -1)
+// 	    + " pooled:"
+// 	    + poolSlot
+// 	    + "]"; 
     }
 
     /**
@@ -270,6 +281,14 @@ public class ClientSession extends Thread {
      * may call a matching XML module).
      */
     public void run() {
+	if (server.config.getBooleanProperty("EnableAsynchSend")) {
+	    server.debug(this, "Enabling asynchronous sending...");
+	    asynchSender = new AsynchSender(this);
+	    asynchSender.start();
+	} else {
+	    server.debug(this, "Disabling asynchronous sending...");
+	}
+
 	do {
 	    try {
 		proxyId = -1;
@@ -297,22 +316,26 @@ public class ClientSession extends Thread {
 			     "I/O error: " + ioe.getClass().toString() + ": " + ioe.getMessage()); 
 	    } catch (NoProxyAvailableException nae) {
 		Server.warn("refused connection; proxy count limit reached");
+	    } catch (Throwable t1) {
+		Server.warn(toString() + ": Unhandled exception: " + t1.toString());
+		t1.printStackTrace();
 	    }
-                        
+
 	    /**
 	     * cleanup.
 	     */
-                        
 	    if (proxy != null) proxy.remove(this);
-                        
+            
 	    Enumeration e = sessionEventListeners.elements();
 	    while (e.hasMoreElements()) {
  		SessionEventListener l = (SessionEventListener) e.nextElement();
 		Server.debug("calling " + l + ".clientStop(" + this + ")");
 		l.clientStop(this);
 	    }
+	    socket = null;
 
 	} while (keepAlive);
+	if (asynchSender != null) asynchSender.shutdown();
 	active = false;
     }
 
@@ -339,6 +362,8 @@ public class ClientSession extends Thread {
 	    socket = null;
 	}
 
+	if (asynchSender != null) asynchSender.shutdown();
+
 // 	if (poolSlot == -1) { // huh?
 // 	    keepAlive = false;
 // 	}
@@ -353,7 +378,7 @@ public class ClientSession extends Thread {
     /**
      *
      */
-    public boolean socketIsNull() {
+    protected boolean socketIsNull() {
 	return socket == null;
     }
 
@@ -388,6 +413,8 @@ public class ClientSession extends Thread {
 	    Server.warn(this.toString() + " failed to initialize parser");
 	}
 
+	if (asynchSender != null) asynchSender.reset();
+
 	synchronized (sessionEventListeners) {
 	    Iterator si = sessionEventListeners.iterator();
 	    while (si.hasNext()) {
@@ -405,24 +432,35 @@ public class ClientSession extends Thread {
      */
     public void addSessionEventListener(SessionEventListener c) {
 	synchronized (sessionEventListeners) {
-	    if (!sessionEventListeners.contains(c))
+	    if (!sessionEventListeners.contains(c)) {
 		sessionEventListeners.add(c);
+	    }
+	}
+    }
+
+    public void removeSessionEventListener(SessionEventListener c) {
+	synchronized (sessionEventListeners) {
+	    sessionEventListeners.remove(c);
 	}
     }
 
     boolean delayedFinishInProgress = false;
 
     /**
+     * Ask this session to finish soon.
+     *
      * Creation date: (2001-06-11 05:35:18)
      */
     public void delayedFinish() {
 	delayedFinishInProgress = true;
     }
+
     public boolean isInDelayedFinish() {
 	return delayedFinishInProgress;
     }
+
     private boolean blockingSocketRead(Socket s)
-	throws IOException {	    
+    throws IOException {	    
 	StringBuffer buff = new StringBuffer();
 	int b = -2;
 	b = input.read();
@@ -443,19 +481,14 @@ public class ClientSession extends Thread {
 		broadcast = parser.parse(buff);
 	    } catch (ParserException pe) {
 		Server.warn(this.toString() + ": parse error: " + pe.getMessage());
-	    } catch (NullPointerException npe) {
-		// TODO: still don't know why NPE occurs when client issues "quit"
-		Server.warn(this.toString() + ": Null Pointer Exception in parser");
-		npe.printStackTrace();
-		finish();
 	    }
 	}
 	if (broadcast && broadcastUnknownXML) {
 	    proxy.broadcast(this, buff.toString());
 	}
-	// might cause bad stats in high load
+
 	if (proxy != null)
-	    proxy.setCommandCount(proxy.getCommandCount() + 1);
+	    proxy.incrementCommandCount(1);
 		
 		
 	return true;
@@ -475,4 +508,75 @@ public class ClientSession extends Thread {
 	this.serverSocket = s;
     }
     private long lastClient = System.currentTimeMillis();
+
+    static class AsynchSender extends Thread {
+	ClientSession session;
+	LinkedList queue = new LinkedList();
+	boolean shutdown = false;
+
+	public AsynchSender(ClientSession session) {
+	    this.session = session;
+	    setDaemon(false);
+	    setName("AsynchSender[" + session.getId() + "]");
+	}
+
+	public void reset() {
+	    setName("AsynchSender[" + session.getId() + "]");
+	    synchronized (queue) {
+		queue.clear();
+	    }
+	}
+
+	public void shutdown() {
+	    shutdown = true;
+	    interrupt();
+	    try {
+		join();
+	    } catch (InterruptedException ex1) {
+		Server.debug("AsynchSender.shutdown(): " + ex1.toString());
+	    }
+	}
+	public void enqueue(String s) {
+	    synchronized (queue) {
+		queue.add(s);
+		queue.notify();
+	    }
+	}
+
+	public void enqueue(List l) {
+	    synchronized (queue) {
+		synchronized (l) {
+		    queue.addAll(l);
+		}
+		queue.notify();
+	    }
+	}
+
+	public void run() {
+	    Exception exception = null;
+	    try {
+		while (true) {
+		    synchronized (queue) {
+			while (queue.size() == 0) {
+			    queue.wait();
+			}
+			while (queue.size() > 0) {
+			    session.send((String) queue.removeFirst());
+			}
+		    }
+		}
+	    } catch (InterruptedException ex2) {
+		if (!shutdown) exception = ex2;
+	    } catch (IOException ex1) {
+		exception = ex1;
+	    }
+
+	    if (exception != null) {
+		Server.warn(exception.toString());
+		exception.printStackTrace();
+		Server.warn("Exception in asynch-sender thread for " + session + " - quitting...");
+	    }
+	}
+    }
+
 }

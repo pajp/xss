@@ -1,16 +1,19 @@
 <XSSConfig>
 	<ListenPort>8086</ListenPort>
 	<ListenAddress>0.0.0.0</ListenAddress>
-	<UsersPerProxy>10</UsersPerProxy>
+	<UsersPerProxy>30</UsersPerProxy>
 	<ProxiesPerServer>1</ProxiesPerServer>
 	<GCInterval>20</GCInterval>
-	<PrintStatus>0</PrintStatus>
+	<PrintStatus>true</PrintStatus>
 	<MaxPingTime>60</MaxPingTime>
 	<DieOnBadModule>1</DieOnBadModule>
-	<ClientIdleTimeout>320</ClientIdleTimeout>
-	<InitialThreadPool>5</InitialThreadPool>
-        <GrowableThreadPool>1</GrowableThreadPool>
+	<ClientIdleTimeout>60</ClientIdleTimeout>
+	<InitialThreadPool>30</InitialThreadPool>
+        <GrowableThreadPool>0</GrowableThreadPool>
+        <CreateSpareThread>false</CreateSpareThread>
         <BroadcastUnhandledTags>false</BroadcastUnhandledTags>
+        <EnableAsynchSend>true</EnableAsynchSend>
+
 	<GlobalModuleProperties>
             <Property name="globalEcho" value="false"/>
 	</GlobalModuleProperties>
@@ -20,23 +23,7 @@
                     <Property name="direction" value="outbound" />
                 </Module>
 		<Module source="classpath" name="se.bricole.xss.server.GenericXMLModule"/>
-                <Module source="classpath" name="se.bricole.xss.server.ECMAScriptModule">
-                    <Property name="scriptDirectory" value="ecmascripts" />
-                    <Property name="autoReload" value="true" />
-                    <Property name="autoRescan" value="true" />
-                </Module>
                 <Module source="classpath" name="nu.dll.redbull.GameSession" />
 
-                <Module source="classpath" name="se.minmejl.xss.IMAPAuthenticator" />
-                <Module source="classpath" name="se.minmejl.xss.MailSession"
-                        authentication="minmejl"
-                        authentication-type="reject"
-                        authentication-method="md5">
-                    <Property name="mail.store.protocol" value="imap" />
-                    <Property name="mail.transport.protocol" value="smtp" />
-                    <Property name="mail.host" value="laroy.mrfriday.com" />
-                    <Property name="imap.host" value="laroy.mrfriday.com" />
-                    <Property name="imap.default-folder" value="INBOX" />
-                </Module>
 	</Modules>
 </XSSConfig>
