@@ -1,0 +1,27 @@
+<XSSConfig>
+	<ListenPort>8085</ListenPort>
+	<ListenAddress>0.0.0.0</ListenAddress>
+	<UsersPerProxy>40</UsersPerProxy>
+	<ProxiesPerServer>50</ProxiesPerServer>
+	<GCInterval>20</GCInterval>
+	<PrintStatus>1</PrintStatus>
+	<MaxPingTime>60</MaxPingTime>
+	<DieOnBadModule>1</DieOnBadModule>
+	<ClientIdleTimeout>320</ClientIdleTimeout>
+	<InitialThreadPool>5</InitialThreadPool>
+        <BroadcastUnhandledTags>true</BroadcastUnhandledTags>
+
+	<GlobalModuleProperties>
+            <Property name="globalEcho"   value="true"/>
+
+	    <Property name="jdbcUrl"      value="jdbc:mysql://localhost/atlantis" />
+	    <Property name="jdbcUser"     value="" />
+	    <Property name="jdbcPassword" value="" />
+	</GlobalModuleProperties>
+
+	<Modules>
+		<Module source="classpath" name="se.vingmedia.xss.server.GenericXMLModule"/>
+		<Module source="classpath" name="se.vingmedia.xss.modules.ChatModule"/>
+		<Module source="classpath" name="com.example.SampleCounterModule"/>
+	</Modules>
+</XSSConfig>

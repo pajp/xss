@@ -1,0 +1,6 @@
+* Documentation
+  - The authentication mechanism
+  - More examples (maybe how to use JDBC in FESI?)
+  - err, a whole lot
+* Persistent storage APIs
+* Perhaps replace FESI with Rhino (<URL:http://www.mozilla.org/rhino/>)

@@ -1,0 +1,5 @@
+<define tag="xss:header">
+<p class="header">
+<div style="font-style: italic;">XML Session Server</div>
+</p>
+</define>

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Change the BASEPATH variable to reflect your XSS installation directory.
+BASEPATH=/usr/local/xss
+DEBUG=false
+LIBPATH=${BASEPATH}/jars
+CONFIG=${BASEPATH}/config.xml
+
+APPCLASSES=${BASEPATH}/classes
+
+JREPATH=${JAVA_HOME}
+
+# Logging (make sure the executing user can write to these!)
+# Uncomment the following line if you want to redirect the logs to files.
+#LOGTOFILE=1
+LOGFILE=/var/log/xss/stdout.log
+ERRORLOG=/var/log/xss/stderr.log
+
+# Application variables
+APPCLASS=se.bricole.xss.server.Server
+CLASSPATH=$APPCLASSES:$LIBPATH
+
+# add the library jars to the classpath
+for f in $LIBPATH/*.jar ; do
+    CLASSPATH=$CLASSPATH:$f
+done
+export CLASSPATH
+
+if [ -z "$LOGTOFILE" ] ; then
+    $JREPATH/bin/java -Dxss.debug=${DEBUG} $APPCLASS $CONFIG 
+else
+    $JREPATH/bin/java -Dxss.debug=${DEBUG} $APPCLASS $CONFIG > $LOGFILE 2> $ERRORLOG
+fi

@@ -1,0 +1,129 @@
+This document describes installation and takes a very quick tour of
+the a sample module.
+
+INSTALLATION
+------------
+
+* Configuring and running XSS in Windows
+
+If you have downloaded the Installer Distribution you only need to
+take care of the prerequisites (step 0 below). The installer should
+set up the rest, just start XSS from the Start Menu ("Bricole XSS" ->
+"Start XSS") and skip to the "BASIC USAGE" section below.
+
+0. Prerequisites: make sure you have a JAVA_HOME system environment
+   variable that actually points to a location where you have your
+   Java installed. In it, there must be a "bin" directory containing
+   the "java.exe" executable. XSS should work with JDK or JRE 1.3 or
+   later. Alternatively, you can set the JAVA_HOME variable in the
+   xss.bat file (in the beginning), something like this:
+
+   set JAVA_HOME=c:\j2sdk1.4_01
+
+1. Unzip the entire contents of the distribution zip file to a
+   directory of your choice. (C:\XSS is the default.)
+
+2. Edit the file "xss.bat" located in the "bin" sub-directory with
+   your favourite editor. In the beginning of that file, change the
+   BASEPATH variable to reflect the directory you've put the XSS in.
+
+3. Optionally, take a look at "config.xml" and see if there is
+   anything there you want to change. If deploying for production use,
+   you might want to have a higher IntialThreadPool value, and if you
+   are using ECMAScript handlers, set the ECMAScriptModule property
+   "autoReload" to "false" to avoid concurrency problems that occur if
+   a script is being reloaded while another thread is processing a
+   request.
+
+4. Finally, simply run the "xss.bat". If everything goes well, you
+   should see a message saying something like:
+
+   1056942713333 [status] all threads launched (5 threads in pool)
+
+
+* Configuring and running XSS in Unix-like systems
+
+Running XSS on Unix is pretty much the same as in Windows:
+
+0. Prerequisites: check that you have a JAVA_HOME environment variable
+   pointing to your JDK or JRE installation directory, or set the
+   JREPATH variable to this in the "bin/xss" file. Example:
+   
+   JREPATH=/usr/local/java
+
+1. Make the bin/xss startup script executable by running
+   "chmod 755 bin/xss" (in the XSS installation directory).
+
+2. Edit bin/xss and change the BASEPATH variable to reflect your XSS
+   installation directory (where you untarred it). Also, you may want
+   to change the LOGTOFILE variable to redirect server output to files.
+
+3. Change config.xml if you want to (see the same step in the Windows
+   instructions).
+
+4. Run the "bin/xss" script.
+
+
+
+BASIC USAGE
+-----------
+
+There are three sample Flash files included with the distribution,
+each demonstrating an included XSS module. This document will only
+describe the simplest of them, called "test.fla", which demonstrates
+the usage of ECMAScript (Javascript) on the server side, combining a
+small "Hello world" example with a simple counter.
+
+In the Flash file, if you are not running the server and the client
+(the Flash movie) on the same computer, you will have to change the
+"xmlsock.connect(...)" line to reflect your server host name or
+address. You will find all the ActionScript code for the test.fla
+movie in the actions for frame 1 (right click on the first frame and
+choose "actions"). As you can see, the code is very minimal. It sets
+up an XMLSocket object and two handlers for acting on connection
+events (successful och failed connection) and XML data. The button's
+Click Handler parameter is set fo the function "sendMessage" so that
+clicking the button will cause the movie to send the same "hello"
+message to the server again.
+
+On the server side, the corresponding script is placed in the
+"ecmascripts" folder, with the name "helloworld.es". All you have to
+do to activate your new XSS script is to name it to have a ".js" or
+".es" extensions, put it in your "ecmascripts" folder and restart the
+server. Also, by default, loaded scripts will automatically be
+reloaded by the server if they are changed on disk. The helloworld.es
+script is also very simplistic, with its only function "test"
+performing the following tasks:
+
+ - Create an XML document using the global XSS "XMLUtil" object.
+ - Put an XML node (named "message") into the document with a text
+   property (named "text") telling the  world it is here.
+ - return the newly created XML object to the server.
+
+After the function, the script assigns the "descriptor" properties of
+itself. Each script file is its own Javascript object, and the
+properties "tag" and "onXML" tell the XSS server what to do with
+it. The "tag" property simply says what XML tag name the script should
+be triggered on. The "onXML" property points out the Javascript
+function to be executed when this tag has arrived. The function in
+question received three parameters, "session", "proxy" and "element",
+none if which are used in this example. In more complex scripts, they
+certainly have their uses, though. They are bridges to Java objects
+for dealing with session data, other clients and the retreived XML
+data itself. Their usage is described in the Java documentation for
+XSS, available in the "docs" directory or on the web:
+	http://www.bricole.se/xss/docs/
+
+The classes in question here are ClientSession and ClientProxy - the
+Element object is a W3C DOM (org.w3c.dom.Element) object, documented
+at <URL:http://xml.apache.org/batik/javadoc/org/w3c/dom/Element.html>.
+The ClientSession connection was called ClientConnection in earlier
+versions of XSS.
+
+Finally, when running the Flash movie, you should see the text "hello,
+world 1" on the screen. Clicking the button causes the Javascript on
+the server to increment a counter and send a new message with it.
+
+Hopefully this gave you some sort of insight on some of the concepts
+of XSS.
+   

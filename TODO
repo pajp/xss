@@ -1,0 +1,20 @@
+* Write package descriptions and introductory texts for the API docs
+* Add support for the Java Logging API (feels important)
+* Provide a mechanism to let modules register tags dynamically during
+  their lifetime. That way the ECMAScript module wouldn't have to be a
+  wildcard module and we can save us some unnecessary module calls.
+* To bring it further, we provide an API to dynamically register new
+  modules entirely.
+* To bring it _even_ further, we should use our own class loader so
+  that we can reload and undeploy modules on the fly.
+
+* Documentation
+  - The authentication mechanism
+  - More examples (maybe how to use JDBC in FESI?)
+  - err, a whole lot
+* Persistent storage APIs
+
+
+Done:
+
+* Perhaps replace FESI with Rhino (<URL:http://www.mozilla.org/rhino/>)

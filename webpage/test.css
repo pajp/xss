@@ -1,0 +1,8 @@
+b.example { color: pink; }
+
+
+pre.example {
+  background: lightgrey;
+  margin-left: 1em;
+  white-space: pre;
+}

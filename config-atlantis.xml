@@ -1,0 +1,14 @@
+<XSSConfig>
+	<ListenPort>8086</ListenPort>
+	<UsersPerProxy>40</UsersPerProxy>
+	<ProxiesPerServer>1</ProxiesPerServer>
+	<GCInterval>300</GCInterval>
+	<PrintStatus>1</PrintStatus>
+	<MaxPingTime>60</MaxPingTime>
+	<DieOnBadModule>1</DieOnBadModule>
+	<ClientIdleTimeout>320</ClientIdleTimeout>
+	<InitialThreadPool>2</InitialThreadPool>
+	<Modules>
+		<Module source="classpath" name="se.atlantis.DBAccessModule"/>
+	</Modules>
+</XSSConfig>

@@ -1,0 +1,130 @@
+<XSSConfig>
+        <!-- The TCP port on which the server will listen. -->
+	<ListenPort>8085</ListenPort>
+
+        <!-- The IP interface to bind to.                 
+             Set to 0.0.0.0 if you don't know or care. -->
+	<ListenAddress>0.0.0.0</ListenAddress>
+
+        <!-- The maximum number of users per ClientProxy.    
+             If ProxiesPerServer is set to one, this is effectively
+             the maximum number of users that can be connected to the
+             server at any time                                       -->
+	<UsersPerProxy>40</UsersPerProxy>
+
+        <!-- The maximum number of proxies that can be allocated in the
+             XSS. Each proxy acts as an isolated group of clients, and can
+             be used to limit the crowdiness. (For example, a chat will get
+             pretty noisy if there are several hundred people there. Using
+             this feature, you can distribute them on "virtual servers" to
+             keep the noise down.)
+         -->
+	<ProxiesPerServer>50</ProxiesPerServer>
+
+        <!-- The number of seconds between each garbage collector run. The
+             GC handles removal of emtpy ClientProxy objects and idle clients.
+         -->
+	<GCInterval>20</GCInterval>
+
+        <!-- (Boolean value, 1/0) If 1, prints out a status message every time
+             the garbage collector is run.
+         -->
+	<PrintStatus>0</PrintStatus>
+
+        <!-- Maximum number of seconds in which a client must respond to a
+             <ping/> request before being disconnected. This is not implemented
+             at the moment (I think).
+         -->
+	<MaxPingTime>60</MaxPingTime>
+
+        <!-- (Boolean value, 1/0) If 1, the server process will terminate if
+             an error occurs during the module loading. -->
+	<DieOnBadModule>1</DieOnBadModule>
+
+        <!-- The number of seconds that may lapse from the last client message
+             before it is disconnected due to inactivity.
+         -->
+	<ClientIdleTimeout>320</ClientIdleTimeout>
+
+        <!-- The number of accepting threads to start intially. The thread
+             pool will automatically grow if needed.
+         -->
+	<InitialThreadPool>5</InitialThreadPool>
+
+        <!-- (Boolean value, 1/0) If 1, the thread pool get five new slots
+             as soon as it gets full. If 0, if the initial thread pool gets
+             full, it keeps only one spare thread for new connections.
+         -->
+        <GrowableThreadPool>1</GrowableThreadPool>
+
+        <!-- (Boolean value, true/false, sorry for the inconsistency)
+             If true, any messages sent by clients that are not intercepted
+             by a registered module will be broadcasted to all other clients
+             in the same ClientProxy. Enabling this lets you easily get
+             started by putting the logic in the Flash apps instead of the
+             server.
+        -->
+        <BroadcastUnhandledTags>false</BroadcastUnhandledTags>
+
+	<GlobalModuleProperties>
+            <Property name="globalEcho"   value="false"/>
+	</GlobalModuleProperties>
+
+        <!-- The Modules node specifies which modules to load at server startup.
+             Each module have a "source" specifying how to find the module class,
+             and a name. The only source available currently is "classpath", 
+             meaning that the server will use the regular class loader to locate
+             the classes. 
+         -->
+	<Modules>
+                <!-- The GenericXMLModule provides some basic tags such as
+                     "auth" (authentication), "get-status" (retreives server
+                     statistics) and "quit". -->
+		<Module source="classpath" name="se.bricole.xss.server.GenericXMLModule"/>
+
+                <!-- The ChatModule is a basic one-room chat supporting user lists,
+                     public and private messages, user information queries and so on.
+                 -->
+		<Module source="classpath" name="se.bricole.xss.modules.ChatModule"/>
+
+                <!-- The SampleCounterModule is a simple counter demonstrating
+                     session persistance and broadcasts
+                 -->
+		<Module source="classpath" name="com.example.SampleCounterModule"/>
+
+                <!-- The ECMAScriptModule provides JavaScript support by scanning
+                     a directory containing .js/.es files and letting the scripts
+                     associate themselves with the tags they wish to handle.
+                     This makes Javascript the easiest way to rapidly prototype
+                     new XMLSocket application, being it is practically
+                     zero-configuration.
+
+                     The ECMAScriptModule supports three module properties:
+                        * scriptDirectory
+                          - Specifies where to look for the script files.
+                          - If the directory is not found, the server falls back 
+                            to the default, which the "ecmascripts" sub-
+                            directory of the directory where the config.xml
+                            file resides. Thus, if you change this value,
+                            make sure you specify an absolute path name.
+                        * autoReload
+                          - Enables a time-stamp check on the script files,
+                            making the server automatically reload a script if
+                            it has been modified on disk since it was loaded.
+                        * autoRescan
+                          - Schedules a script directory rescan every
+                            _autoRescanInterval_ seconds (see below), making
+                            it possible to add new scripts without restarting
+                            the server. It is not possible to remove a script
+                            from memory without a server shutdown, though.
+                        * autoRescanInterval
+                          - Specifies the delay (in seconds) between each scan
+                            of the script directory.
+                 -->
+                <Module source="classpath" name="se.bricole.xss.server.ECMAScriptModule">
+                    <Property name="scriptDirectory" value="dummy" />
+                    <Property name="autoReload" value="true" />
+                    <Property name="autoRescan" value="true" />
+                </Module>
+	</Modules>
+</XSSConfig>
