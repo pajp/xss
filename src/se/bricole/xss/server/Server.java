@@ -30,7 +30,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 
     public final static int VERSION_MAJOR = 0;
     public final static int VERSION_MINOR = 9;
-    public final static int VERSION_MINOR_REVISION = 4;
+    public final static int VERSION_MINOR_REVISION = 5;
 
     public final static String PRODUCT_NAME = "XSS";
 

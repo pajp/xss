@@ -227,8 +227,19 @@ public class ClientSession extends Thread implements XMLClient {
 				  ", input: " + input + ", output: " + output + ")");
 	}
 	if (Server.debug) Server.debug(this, "Sending: " + s);
-	output.write((s + "\000").getBytes("UTF-8"));
+	send((s + "\000").getBytes("UTF-8"));
+    }
+
+    protected void send(byte[] data) throws IOException {
+	send(data, 0, data.length);
+    }
+
+    long bytesWritten = 0;
+    long bytesRead = 0;
+    protected void send(byte[] data, int offset, int length) throws IOException {
+	output.write(data, offset, length);
 	lastSend = System.currentTimeMillis();
+	bytesWritten += length;
     }
 
     /**
@@ -494,6 +505,7 @@ public class ClientSession extends Thread implements XMLClient {
 	b = input.read();
 	while (b != -1 && b != 0) {
 	    buff.append((char) b);
+	    bytesRead++;
 	    b = input.read();
 	    lastReceive = System.currentTimeMillis();
 	}
