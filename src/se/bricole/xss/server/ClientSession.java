@@ -23,7 +23,7 @@ import org.w3c.dom.Document;
  * implementation detail side effect and should change in the future,
  * so developers should rely on the Thread API being there. </p>
  */
-public class ClientSession extends Thread {
+public class ClientSession extends Thread implements XMLClient {
 
     public final static String vcId = "$Id$";
 
@@ -38,6 +38,7 @@ public class ClientSession extends Thread {
     AsynchSender asynchSender = null;
 
     private long lastSend = System.currentTimeMillis();
+    private long lastReceive = 0;
 
     int proxyId = -1, poolSlot = -1;
 
@@ -390,11 +391,13 @@ public class ClientSession extends Thread {
      * Returns the number of milliseconds elapsed since this client sent any data.
      */
     public long getIdleTimeMillis() {
-	return System.currentTimeMillis() - lastSend;
+	return System.currentTimeMillis() - lastReceive;
     }
     protected void setup(Socket s, ClientProxy p) throws IOException {
 	this.socket = s;
 	this.proxy = p;
+
+	lastReceive = System.currentTimeMillis();
 
 	setId(Server.getGUID());
 	proxy.add(this);
@@ -467,10 +470,12 @@ public class ClientSession extends Thread {
     throws IOException {	    
 	StringBuffer buff = new StringBuffer();
 	int b = -2;
+	lastReceive = System.currentTimeMillis();
 	b = input.read();
 	while (b != -1 && b != 0) {
 	    buff.append((char) b);
 	    b = input.read();
+	    lastReceive = System.currentTimeMillis();
 	}
 	if (b == -1) {
 	    //keepAlive = false;

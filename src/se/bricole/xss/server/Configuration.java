@@ -285,7 +285,7 @@ public class Configuration extends java.util.Properties {
 	if (me.getException() != null) {
 	    Server.warn("\tException: " + me.getException().getClass().toString());
 	    Server.warn("\tMessage: " + me.getException().getMessage());
-	    me.printStackTrace();
+	    if (Server.debug) me.getException().printStackTrace();
 	} else {
 	    Server.warn("\tMessage: " + me.getMessage());
 	}

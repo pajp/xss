@@ -30,6 +30,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 
     public final static int VERSION_MAJOR = 0;
     public final static int VERSION_MINOR = 9;
+    public final static int VERSION_MINOR_REVISION = 4;
 
     public final static String PRODUCT_NAME = "XSS";
 
@@ -71,7 +72,8 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      * Returns a version string in the format "major.minor"
      */
     public static String getVersionString() {
-	return VERSION_MAJOR + "." + VERSION_MINOR;
+	return VERSION_MAJOR + "." + VERSION_MINOR + 
+	    (VERSION_MINOR_REVISION > 0 ? ("." + VERSION_MINOR_REVISION) : "");
     }
 
     /**
@@ -135,6 +137,9 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		    while (ci.hasNext()) {
 			ClientSession cc = (ClientSession) ci.next();
 			if (cc.isActive() && cc.getIdleTimeMillis() > clientIdleTimeout) {
+			    debug("Will disconnect client " + 
+				  cc + " that has been idle for " + 
+				  cc.getIdleTimeMillis() + " ms.");
 			    idleClients.add(cc);
 			}
 		    }
@@ -158,7 +163,9 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	    e = idleClients.elements();
 	    while (e.hasMoreElements()) {
 		try {
-		    ((ClientSession) e.nextElement()).close();
+		    ClientSession cls = (ClientSession) e.nextElement();
+		    debug("Closing idle client " + cls);
+		    cls.close();
 		    j++;
 		} catch (IOException ioException) {
 		    warn("I/O error while trying to close idle client: " + ioException.toString());
@@ -243,25 +250,30 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	debug(o.toString() + " " + s);
     }
 
+
+    public static String getTimestamp() {
+	return "" + System.currentTimeMillis();
+    }
+
     /**
      * Generic debug outputter.
      */
     public static void debug(String s) {
-	if (debug) println(System.currentTimeMillis() + " [dbg " + Thread.currentThread().getName() + "] " + s);
+	if (debug) println(getTimestamp() + " [dbg " + Thread.currentThread().getName() + "] " + s);
     }
 
     /**
      * Output a status message to the standard log (in current implementation stdout)
      */
     public static void status(String s) {
-	println(System.currentTimeMillis() + " [status] " + s);
+	println(getTimestamp() + " [status] " + s);
     }
 
     /**
      * Output a warning message to stderr.
      */
     public static void warn(String s) {
-	debug("[warning] " + s);
+	println(getTimestamp() + " [warning] " + s);
     }
     
     private static JFrame createFrame() {
