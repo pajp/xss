@@ -8,6 +8,8 @@ import java.util.Properties;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,13 +47,15 @@ public class ClientSession extends Thread implements XMLClient {
     boolean keepAlive = true;
     boolean active = false;
 
+    boolean hasClosed = false;
+
     OutputStream output;
     InputStream input;
 
     CommandParser parser = null;
 
     Properties clientProperties;
-    Hashtable clientObjects = new Hashtable();
+    Map clientObjects = new HashMap();
 
     Set authenticatedDomains = new HashSet();
     boolean isAuthenticated = false;
@@ -120,7 +124,9 @@ public class ClientSession extends Thread implements XMLClient {
      * valid key is a String object.
      */
     public void putObject(String key, Object o) {
-	clientObjects.put(key, o);
+	synchronized (clientObjects) {
+	    clientObjects.put(key, o);
+	}
     }
 
     /**
@@ -130,11 +136,15 @@ public class ClientSession extends Thread implements XMLClient {
      * valid key is a String object.
      */
     public Object getObject(String key) {
-	return clientObjects.get(key);
+	synchronized (clientObjects) {
+	    return clientObjects.get(key);
+	}
     }
 
     public Object removeObject(String key) {
-	return clientObjects.remove(key);
+	synchronized (clientObjects) {
+	    return clientObjects.remove(key);
+	}
     }
 
     /**
@@ -181,6 +191,10 @@ public class ClientSession extends Thread implements XMLClient {
 	proxyId = id;
     }
 
+    protected boolean hasClosed() {
+	return hasClosed;
+    }
+
     public void sendAsynch(Document doc)
     throws IOException {
 	sendAsynch(XMLUtil.documentToString(doc));
@@ -212,7 +226,7 @@ public class ClientSession extends Thread implements XMLClient {
 	    throw new IOException("Some I/O object is null (socket: " + socket + 
 				  ", input: " + input + ", output: " + output + ")");
 	}
-	Server.debug(this, "Sending: " + s);
+	if (Server.debug) Server.debug(this, "Sending: " + s);
 	output.write((s + "\000").getBytes("UTF-8"));
 	lastSend = System.currentTimeMillis();
     }
@@ -222,6 +236,8 @@ public class ClientSession extends Thread implements XMLClient {
      */
     public void close() throws IOException {
 	if (socket != null) socket.close();
+	hasClosed = true;
+	Server.status(toString() + ": disconnecting client.");
     }
 
     /**
@@ -299,19 +315,21 @@ public class ClientSession extends Thread implements XMLClient {
 		Server.debug(this, "waiting for connection");
 		setName("IdleClientThread-" + poolSlot);
 		active = false;
+		hasClosed = false;
 		try {
 		    socket = serverSocket.accept();
-		    Server.debug("Connect: " +
-				 socket.getInetAddress().getHostAddress());
 		} catch (SocketException se) {
 		    Server.debug(this, se.getMessage());
 		    keepAlive = false;
 		    continue;
 		}
+		Server.status(toString() + ": connect: " +
+			      socket.getInetAddress().getHostAddress());
+
 		active = true;
 		setName("ActiveClientThread-" + poolSlot);
-
 		setup(socket, server.findClientProxy());
+
 // 		Server.status("[" + proxyId + "] Connect from: " +
 // 			      socket.getInetAddress().getHostAddress());
 		while(blockingSocketRead(socket));
@@ -334,10 +352,12 @@ public class ClientSession extends Thread implements XMLClient {
 	    Enumeration e = sessionEventListeners.elements();
 	    while (e.hasMoreElements()) {
  		SessionEventListener l = (SessionEventListener) e.nextElement();
-		Server.debug("calling " + l + ".clientStop(" + this + ")");
+		if (Server.debug) {
+		    Server.debug("calling " + l + ".clientStop(" + this + ")");
+		}
 		l.clientStop(this);
 	    }
-	    socket = null;
+	    //socket = null;
 
 	} while (keepAlive);
 	if (asynchSender != null) asynchSender.shutdown();
@@ -479,7 +499,7 @@ public class ClientSession extends Thread implements XMLClient {
 	}
 	if (b == -1) {
 	    //keepAlive = false;
-	    Server.status(this.toString() + ": connection closed by foreign host");
+	    Server.status(toString() + ": connection closed by foreign host");
 	    return false;
 	}
 	boolean broadcast = true;
@@ -573,14 +593,22 @@ public class ClientSession extends Thread implements XMLClient {
 			    try {
 				session.send((String) queue.removeFirst());
 			    } catch (IOException ex1) {
-				Server.warn("I/O error in AsynchSender for " + session + 
-					    ": " + ex1.toString());
-				ex1.printStackTrace();
-				if (queue.size() > 0) {
+
+				if (!session.hasClosed()) {
+
+				    try {
+					session.close();
+				    } catch (IOException ex2) {}
+
+				    Server.warn("I/O error in AsynchSender for " + session + 
+						": " + ex1.toString());
+				    if (Server.debug) ex1.printStackTrace();
+				}
+				if (Server.debug && queue.size() > 0) {
 				    Server.warn("AsynchSender for " + session + " discarding " + 
 						queue.size() + " messages.");
-				    queue.clear();
 				}
+				queue.clear();
 			    }
 			}
 		    }
