@@ -598,7 +598,7 @@ public class ClientSession extends Thread implements XMLClient {
 			}
 			
 			try {
-			    session.send((String) queue.removeFirst());
+			    session.send(nextString);
 			} catch (IOException ex1) {
 			    
 			    if (!session.hasClosed()) {
