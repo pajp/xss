@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="iso-8859-1"?>
 
 <!--
   Ant build spec for XSS and related code.
@@ -9,7 +9,7 @@
 <project name="xss" default="server" basedir=".">
   <target name="init">
     <tstamp/>
-    <property name="project.version" value="0.9"/>
+    <property name="project.version" value="0.9.1"/>
     <property name="project.name" value="XSS"/>
     <property name="project.dir"  value="${basedir}"/>
     <property name="project.src"  value="${basedir}/src"/>

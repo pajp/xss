@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import org.w3c.dom.Document;
 
@@ -18,8 +19,7 @@ import org.w3c.dom.Document;
  * </p>
  * <p>The fact that this is a subclass of <code>Thread</code> is an
  * implementation detail side effect and should change in the future,
- * so developers should rely on the Thread API being there. Bad OO,
- * but I was young and innocent.</p>
+ * so developers should rely on the Thread API being there. </p>
  */
 public class ClientSession extends Thread {
 
@@ -361,6 +361,14 @@ public class ClientSession extends Thread {
 	output = socket.getOutputStream();
 	input = socket.getInputStream();
 
+	Iterator i = proxy.getConfiguration().ioFilters.iterator();
+	while (i.hasNext()) {
+	    IOFilterModule filter = (IOFilterModule) i.next();
+	    Server.debug("Attaching I/O filter " + filter);
+	    input = filter.getInputFilter(input);
+	    output = filter.getOutputFilter(output);
+	}
+
 	clientProperties = new Properties();
 
 	try {
@@ -382,6 +390,7 @@ public class ClientSession extends Thread {
     }
 
     boolean delayedFinishInProgress = false;
+
     /**
      * Creation date: (2001-06-11 05:35:18)
      */

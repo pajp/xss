@@ -121,7 +121,8 @@ class GenericXMLModule implements XMLTagHandler {
 		    StringBuffer serverDataBuf =
 			new StringBuffer();
 		    for (int i=0; i < serverBytes.length; i++) {
-			serverDataBuf.append(Integer.toString(serverBytes[i], 16));
+			String hex = Integer.toHexString(serverBytes[i]+128);
+			serverDataBuf.append(hex.length() == 1 ? "0" + hex : hex);
 		    }
 		    String serverData = serverDataBuf.toString();
 

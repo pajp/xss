@@ -29,6 +29,7 @@ public interface Module {
     public final static int WILDCARD = 16;
     public final static int FILTER = 32;
     public final static int REGISTRAR = 64;
+    public final static int IOFILTER = 128;
     
 
     public void setProperties(Properties p) throws ModuleException;

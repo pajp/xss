@@ -59,6 +59,8 @@ public class Configuration extends java.util.Properties {
     List statelessWildcardModules = new LinkedList();
     List statefulWildcardModules = new LinkedList();
 
+    List ioFilters = new LinkedList();
+
     protected File configFile = null;
     protected File baseDir = null;
 
@@ -200,7 +202,10 @@ public class Configuration extends java.util.Properties {
 			if (mn.getNodeName().equals("Module")
 			    && mn.getNodeType() == Node.ELEMENT_NODE) {
 			    Element e = (Element) mn;
-			    String source = e.getAttribute("source");
+			    String source = "classpath";
+			    if (e.hasAttribute("source")) {
+				source = e.getAttribute("source");
+			    }
 			    String name = e.getAttribute("name");
 			    String auth = e.getAttribute("authentication");
 			    String authType = e.getAttribute("authentication-type");
@@ -414,6 +419,10 @@ public class Configuration extends java.util.Properties {
 		for (int i=0; i < domains.length; i++) {
 		    authHandlers.put(domains[i], authModule);
 		}
+	    }
+
+	    if ((moduleType & Module.IOFILTER) == Module.IOFILTER) {
+		ioFilters.add(m);
 	    }
 	} catch (ClassCastException ce) {
 	    throw new ModuleException(ce);
