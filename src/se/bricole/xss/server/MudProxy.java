@@ -4,7 +4,7 @@ import java.net.*;
 import java.io.*;
 
 
-private class MudProxy {
+class MudProxy {
     public final static String vcId = "$Id: MudProxy.java,v 1.3 2002/09/12 00:54:52 pipeman Exp $";
 
     public final static String GREETING_NAME = "By what name do you wish to be known?";
@@ -22,7 +22,7 @@ private class MudProxy {
     }
     
     public void setProperties(java.util.Properties p) {}
-    
+
     public void login(String user, String password) {
 	try {
 	    InputStream input = mudSocket.getInputStream();

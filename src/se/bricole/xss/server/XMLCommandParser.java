@@ -15,7 +15,7 @@ import org.apache.xerces.dom.DocumentImpl;
  * This is the class used by the ClientConnection class when it wants to parse XML-documents (which is
  * all it can parse as of now).
  */
-protected class XMLCommandParser implements CommandParser {
+class XMLCommandParser implements CommandParser {
 
     public final static String vcId = "$Id: XMLCommandParser.java,v 1.5 2002/09/12 00:54:52 pipeman Exp $";
 
@@ -84,6 +84,7 @@ protected class XMLCommandParser implements CommandParser {
     private boolean parse(String s) throws IOException, ParserException {
 	boolean handled = false;
 	try {
+	    // XXX: does not respect charset encoding (works anyway mostly)
 	    Document d = db.parse(new ByteArrayInputStream(s.getBytes()));
 
 	    Element root = d.getDocumentElement();
@@ -141,7 +142,9 @@ protected class XMLCommandParser implements CommandParser {
 		    }
 		    Server.debug(client, 
 				 "[XML] [SL] \"" + rootName + "\" -> \"" +
-				 h.getClass().toString() + "\"");
+				 h.getClass().toString() + "@" +
+				 Integer.toHexString(System.identityHashCode(h))
+				 + "\"");
 		    handled = h.xmlTag(client, proxy, root);
 		    if (handled && (h.TYPE & Module.FILTER) == Module.FILTER) {
 			return handled;

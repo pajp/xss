@@ -276,6 +276,10 @@ public class Configuration extends java.util.Properties {
 	manager.restart();
     }
 
+    public long getUptime() {
+	return manager.getUptime();
+    }
+
     public File getConfigurationFile() {
 	return configFile;
     }

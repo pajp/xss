@@ -120,6 +120,20 @@ public class ClientProxy {
     }
 
     /**
+     * Returns a specific client
+     */
+    public ClientSession getClient(int id) {
+	synchronized (clients) {
+	    Iterator i = clients.iterator();
+	    while (i.hasNext()) {
+		ClientSession c = (ClientSession) i.next();
+		if (c.getId() == id) return c;
+	    }
+	}
+	return null;
+    }
+
+    /**
      * Does an integrity check of this ClientProxy.
      */
     protected void checkIntegrity() {

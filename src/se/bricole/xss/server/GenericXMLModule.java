@@ -196,6 +196,7 @@ class GenericXMLModule implements XMLTagHandler {
 		statroot.setAttribute("yourId", "" + client.getId());
 		statroot.setAttribute("yourProxy", "" + proxy.getId());
 		statroot.setAttribute("serverVersion", Server.getVersionString());
+		statroot.setAttribute("uptime", "" + proxy.getConfiguration().getUptime());
 		replyDoc.appendChild(statroot);
 
 		OutputFormat format = new OutputFormat(replyDoc);

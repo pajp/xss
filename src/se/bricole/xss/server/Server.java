@@ -192,7 +192,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     /**
      * Returns the uptime of the server in milliseconds
      */
-    public static long getUptime() {
+    public long getUptime() {
 	return System.currentTimeMillis() - bootTime;
     }
 

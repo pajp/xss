@@ -193,7 +193,7 @@ public class ClientSession extends Thread {
 	    throw new IOException("Some I/O object is null");
 	}
 
-	output.write((s + "\000").getBytes());
+	output.write((s + "\000").getBytes("UTF-8"));
 	lastSend = System.currentTimeMillis();
     }
 
