@@ -52,8 +52,9 @@ public class ClientProxy {
     }
 
     /**
-     * <p>The methods addSharedObject() and getSharedObject() provides a way of sharing objects among clients
-     * in a ClientProxy. The functionality is basically that of a Hashtable or HashMap.</p>
+     * The methods addSharedObject() and getSharedObject() provides
+     * a way of sharing objects among clients in a ClientProxy. The
+     * functionality is basically that of a Hashtable or HashMap
      *
      * @param	key	the hash key
      * @returns	the object associated with <i>key</i>, or null if none exists.

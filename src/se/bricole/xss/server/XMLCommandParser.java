@@ -113,15 +113,15 @@ class XMLCommandParser implements CommandParser {
 		    String domain = configuration.getFilterAuthDomain(m);
 		    if (domain != null) {
 			if (!client.isAuthenticatedTo(domain)) {
-			    Server.debug(client,
-					 "[XML] [*SL] \"" + rootName + "\" !> \"" +
-					 m.getClass().toString() + "\"");
+// 			    Server.debug(client,
+// 					 "[XML] [*SL] \"" + rootName + "\" !> \"" +
+// 					 m.getClass().toString() + "\"");
 			    continue;
 			}
 
 		    }
-		    Server.debug(client, "[XML] [*SL] \"" + rootName + "\" -> \"" +
-				 m.getClass().getName() + "\"");
+// 		    Server.debug(client, "[XML] [*SL] \"" + rootName + "\" -> \"" +
+// 				 m.getClass().getName() + "\"");
 		    handled = m.xmlTag(client, proxy, root);
 		    if (handled && (m.TYPE & Module.FILTER) == Module.FILTER) {
 			return handled;
@@ -137,18 +137,18 @@ class XMLCommandParser implements CommandParser {
 		    String domain = configuration.getFilterAuthDomain(h);
 		    if (domain != null) {
 			if (!client.isAuthenticatedTo(domain)) {
-			    Server.debug(client,
-					 "[XML] [SL] \"" + rootName + "\" !> \"" +
-					 h.getClass().toString() + "\"");
+// 			    Server.debug(client,
+// 					 "[XML] [SL] \"" + rootName + "\" !> \"" +
+// 					 h.getClass().toString() + "\"");
 			    continue;
 			}
 
 		    }
-		    Server.debug(client, 
-				 "[XML] [SL] \"" + rootName + "\" -> \"" +
-				 h.getClass().toString() + "@" +
-				 Integer.toHexString(System.identityHashCode(h))
-				 + "\"");
+// 		    Server.debug(client, 
+// 				 "[XML] [SL] \"" + rootName + "\" -> \"" +
+// 				 h.getClass().toString() + "@" +
+// 				 Integer.toHexString(System.identityHashCode(h))
+// 				 + "\"");
 		    handled = h.xmlTag(client, proxy, root);
 		    if (handled && (h.TYPE & Module.FILTER) == Module.FILTER) {
 			return handled;
@@ -165,16 +165,16 @@ class XMLCommandParser implements CommandParser {
 		    String domain = configuration.getFilterAuthDomain(m);
 		    if (domain != null) {
 			if (!client.isAuthenticatedTo(domain)) {
-			    Server.debug(client,
-					 "[XML] [*SF] \"" + rootName + "\" !> \"" +
-					 m.getClass().toString() + "\"");
+//  			    Server.debug(client,
+// 					 "[XML] [*SF] \"" + rootName + "\" !> \"" +
+// 					 m.getClass().toString() + "\"");
 			    continue;
 			}
 
 		    }
-		    Server.debug(client, 
-				 "[XML] [*SF] \"" + rootName + "\" -> \"" +
-				 m.getClass().getName() + "\"");
+// 		    Server.debug(client, 
+// 				 "[XML] [*SF] \"" + rootName + "\" -> \"" +
+// 				 m.getClass().getName() + "\"");
 		    handled = m.xmlTag(root);
 		    if (handled && (m.TYPE & Module.FILTER) == Module.FILTER) {
 			return handled;
@@ -188,17 +188,17 @@ class XMLCommandParser implements CommandParser {
 		String domain = configuration.getFilterAuthDomain(xsth);
 		if (domain != null) {
 		    if (!client.isAuthenticatedTo(domain)) {
-			Server.debug(client,
-				     "[XML] [SF] \"" + rootName + "\" !> \"" +
-				     xsth.getClass().toString() + "\"");
+// 			Server.debug(client,
+// 				     "[XML] [SF] \"" + rootName + "\" !> \"" +
+// 				     xsth.getClass().toString() + "\"");
 			filter = true;
 		    }
 		    
 		}
 		if (!filter) {
-		    Server.debug(client, 
-				 "[XML] [SF] \"" + rootName + "\" -> \"" +
-				 xsth.getClass().toString() + "\""); 
+// 		    Server.debug(client, 
+// 				 "[XML] [SF] \"" + rootName + "\" -> \"" +
+// 				 xsth.getClass().toString() + "\""); 
 		    handled = xsth.xmlTag(root);
 		}
 	    }

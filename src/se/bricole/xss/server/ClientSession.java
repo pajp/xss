@@ -211,7 +211,7 @@ public class ClientSession extends Thread {
 	    throw new IOException("Some I/O object is null (socket: " + socket + 
 				  ", input: " + input + ", output: " + output + ")");
 	}
-	Server.debug(Thread.currentThread(), "Sending: " + s);
+	Server.debug(this, "Sending: " + s);
 	output.write((s + "\000").getBytes("UTF-8"));
 	lastSend = System.currentTimeMillis();
     }
@@ -282,11 +282,11 @@ public class ClientSession extends Thread {
      */
     public void run() {
 	if (server.config.getBooleanProperty("EnableAsynchSend")) {
-	    server.debug(this, "Enabling asynchronous sending...");
+	    //server.debug(this, "Enabling asynchronous sending...");
 	    asynchSender = new AsynchSender(this);
 	    asynchSender.start();
 	} else {
-	    server.debug(this, "Disabling asynchronous sending...");
+	    //server.debug(this, "Disabling asynchronous sending...");
 	}
 
 	do {
@@ -300,8 +300,10 @@ public class ClientSession extends Thread {
 		active = false;
 		try {
 		    socket = serverSocket.accept();
+		    Server.debug("Connect: " +
+				 socket.getInetAddress().getHostAddress());
 		} catch (SocketException se) {
-		    Server.debug(this, "SocketException: " + se.getMessage() + " -- quitting");
+		    Server.debug(this, se.getMessage());
 		    keepAlive = false;
 		    continue;
 		}
@@ -309,6 +311,8 @@ public class ClientSession extends Thread {
 		setName("ActiveClientThread-" + poolSlot);
 
 		setup(socket, server.findClientProxy());
+// 		Server.status("[" + proxyId + "] Connect from: " +
+// 			      socket.getInetAddress().getHostAddress());
 		while(blockingSocketRead(socket));
 
 	    } catch (IOException ioe) {
@@ -362,7 +366,7 @@ public class ClientSession extends Thread {
 	    socket = null;
 	}
 
-	if (asynchSender != null) asynchSender.shutdown();
+	//if (asynchSender != null) asynchSender.shutdown();
 
 // 	if (poolSlot == -1) { // huh?
 // 	    keepAlive = false;

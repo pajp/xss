@@ -59,6 +59,9 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 
     Set looseThreads = Collections.synchronizedSet(new HashSet());
     private boolean shutdown = false;
+
+    private static LogThread logThread = new LogThread();
+    static { logThread.start(); }
         
     ServerSocket srv;
 
@@ -220,12 +223,14 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 
     public void addGCHook(GCHook hook) {
 	synchronized (gcHooks) {
+	    debug("Adding GC hook " + hook);
 	    gcHooks.add(hook);
 	}
     }
 
     public void removeGCHook(GCHook hook) {
 	synchronized (gcHooks) {
+	    debug("Removing GC hook " + hook);
 	    gcHooks.remove(hook);
 	}
     }
@@ -234,28 +239,28 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
      *  Used to debug client communication. Prints out client information
      *  (ClientConnection.toString()) along with a timestamp and the supplied String to stdout.
      */
-    public static final synchronized void debug(Object o, String s) {
+    public static void debug(Object o, String s) {
 	debug(o.toString() + " " + s);
     }
 
     /**
      * Generic debug outputter.
      */
-    public static final synchronized void debug(String s) {
+    public static void debug(String s) {
 	if (debug) println(System.currentTimeMillis() + " [dbg " + Thread.currentThread().getName() + "] " + s);
     }
 
     /**
      * Output a status message to the standard log (in current implementation stdout)
      */
-    public static synchronized void status(String s) {
+    public static void status(String s) {
 	println(System.currentTimeMillis() + " [status] " + s);
     }
 
     /**
      * Output a warning message to stderr.
      */
-    public static synchronized void warn(String s) {
+    public static void warn(String s) {
 	debug("[warning] " + s);
     }
     
@@ -313,9 +318,9 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
     
     static boolean gui = false;
     static Console console = null;
-    protected synchronized static void println(String s) {
+    protected static void println(String s) {
 	if (gui && console == null) initGUI();
-	System.out.println(s);
+	logThread.println(s);
 	
     }
 
@@ -493,19 +498,30 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	}
 
 	int deadThreads = 0;
+
+	// TODO: set a max wait value. (Use Thread.join(long) to timeout).
+	// It should be pretty low (max a few secs). When the max wait
+	// has expired, we can assume some braindead thread has stuck
+	// and just ignore it.
+	// problem: java is braindead. we can't tell the difference
+	// of a Thread.join(long) that has actually been joined 
+	// (ie, the thread has exited) or if the join has timed out
+	// (the thread is still running). Best we can do is isAlive()
+	// after the join() has returned.
+	Server.debug("Waiting for all threads to finish...");
 	while (deadThreads < threadPool.length) {
 	    deadThreads = 0;
 	    for (int i=0; i < threadPool.length; i++) {
 		if (threadPool[i] != null && threadPool[i].isAlive()) {
-		    Server.debug("Waiting for thread " + i);
+		    //Server.debug("Waiting for thread " + i);
 		    try {
 			threadPool[i].join();
-			Server.debug("Thread " + i + " has finished.");
+			//Server.debug("Thread " + i + " has finished.");
 			deadThreads++;
 		    } catch (InterruptedException ex1) {
 		    }
 		} else {
-		    Server.debug("Thread " + i + " already dead.");
+		    //Server.debug("Thread " + i + " already dead.");
 		    deadThreads++;
 		}
 	    }
@@ -625,6 +641,40 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		threadPool = newPool;
 		status("New pool allocated with " + threadPool.length + " threads");
 		expanding = false;
+	    }
+	}
+    }
+
+    static class LogThread extends Thread {
+	public LogThread() {
+	    setDaemon(true);
+	}
+
+	LinkedList queue = new LinkedList();
+
+	public void println(String s) {
+	    synchronized (queue) {
+		queue.add(s);
+		queue.notify();
+	    }
+	}
+	
+	public void run() {
+	    try {
+		while (true) {
+		    Object next = null;
+		    synchronized (queue) {
+			if (queue.size() > 0)
+			    next = queue.removeFirst();
+			else 
+			    queue.wait();
+		    }
+		    if (next != null) {
+			System.out.println((String) next);
+		    }
+		}
+	    } catch (InterruptedException ex1) {
+		fatal("LogThread interrupted: " + ex1.toString());
 	    }
 	}
     }

@@ -38,8 +38,12 @@ FOR %%f IN (%LIBPATH%\*.jar) DO (
     set XSS_CP=!XSS_CP!;%%f
 )
 
+if "%DEBUG%"=="true" (
+    set DEBUGARGS=-Dxss.debug=true -Xprof
+)
+
 echo on
-%JAVA_HOME%\bin\java -Dxss.debug=%DEBUG% -cp %XSS_CP% se.bricole.xss.server.Server %CONFIG%
+%JAVA_HOME%\bin\java %DEBUGARGS% -cp %XSS_CP% se.bricole.xss.server.Server %CONFIG%
 @echo off
 
 goto clean
