@@ -31,6 +31,7 @@ class GenericXMLModule implements XMLTagHandler {
     ClientProxy proxy;
     ClientSession client;
     Properties properties = new Properties();
+    int maxAuthAttempts = 3;
 
     public String[] getTagNames() {
 	return tagNames;
@@ -174,7 +175,14 @@ class GenericXMLModule implements XMLTagHandler {
 	    } else {
 		attr.setProperty("message", "access denied by authenticator");
 		attr.setProperty("domain", domain);
+		Integer attempts = (Integer) client.getObject("auth.attempts");
+		if (attempts == null) attempts = new Integer(1);
+		else attempts = new Integer(attempts.intValue()+1);
+		client.putObject("auth.attempts", attempts);
 		client.send(XMLUtil.simpleTag("auth-error", attr));
+		if (attempts.intValue() >= maxAuthAttempts) {
+		    client.finish();
+		}
 	    }
 	    return true;
 		
@@ -277,6 +285,12 @@ class GenericXMLModule implements XMLTagHandler {
 
     public void setProperties(Properties p) {
 	properties = p;
+	try {
+	    maxAuthAttempts = p.containsKey("max-auth-attempts") ?
+		Integer.parseInt(p.getProperty("max-auth-attempts")) : 3;
+	} catch (NumberFormatException ex1) {
+	    
+	}
     }
 
 }

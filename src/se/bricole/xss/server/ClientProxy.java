@@ -223,30 +223,40 @@ public class ClientProxy {
 	}
     }
 
+    /**
+     * Equal to send(source, targets, doc, false);
+     *
+     * @see #send(ClientSession, List, Document, boolean)
+     */
     public void send(ClientSession source, List targets, Document doc)
     throws IOException {
 	send(source, targets, doc, false);
     }
 
+    /**
+     * Sends data to a list of targets.
+     * If sendToSource fale, the 'source' object will be not be sent to.
+     *
+     * WARNING: this method does NOT synchronize on the targets list, caller
+     * must do that to ensure thread safety.
+     */
     public void send(ClientSession source, List targets, Document doc, boolean sendToSource)
     throws IOException {
 	checkIntegrity();
-	synchronized (targets) {
-	    Iterator i = targets.iterator();
-	    while (i.hasNext()) {
-		Object _client = i.next();
-		if (!sendToSource && _client == source) continue;
-
-		if (!(_client instanceof ClientSession)) {
-		    throw new IllegalArgumentException("Target list contained object of type " +
-						       _client.getClass().getName());
-		}
-
-		ClientSession client = (ClientSession) _client;
-		if (client == source && !sendToSource) continue;
-		client.sendAsynch(doc);
-
+	Iterator i = targets.iterator();
+	while (i.hasNext()) {
+	    Object _client = i.next();
+	    if (!sendToSource && _client == source) continue;
+	    
+	    if (!(_client instanceof ClientSession)) {
+		throw new IllegalArgumentException("Target list contained object of type " +
+						   _client.getClass().getName());
 	    }
+	    
+	    ClientSession client = (ClientSession) _client;
+	    if (client == source && !sendToSource) continue;
+	    client.sendAsynch(doc);
+	    
 	}
     }
         

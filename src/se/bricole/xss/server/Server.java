@@ -509,15 +509,19 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 	// (the thread is still running). Best we can do is isAlive()
 	// after the join() has returned.
 	Server.debug("Waiting for all threads to finish...");
-	while (deadThreads < threadPool.length) {
+	long maxWait = 5000;
+	long waitStart = System.currentTimeMillis();
+	while (deadThreads < threadPool.length &&
+	       (System.currentTimeMillis() - waitStart < maxWait)) {
 	    deadThreads = 0;
 	    for (int i=0; i < threadPool.length; i++) {
 		if (threadPool[i] != null && threadPool[i].isAlive()) {
 		    //Server.debug("Waiting for thread " + i);
 		    try {
-			threadPool[i].join();
+			threadPool[i].join(500);
 			//Server.debug("Thread " + i + " has finished.");
-			deadThreads++;
+			if (!threadPool[i].isAlive()) deadThreads++;
+
 		    } catch (InterruptedException ex1) {
 		    }
 		} else {
@@ -525,6 +529,14 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 		    deadThreads++;
 		}
 	    }
+	}
+	// if we build up a set of the frozen threads above, we should be able to 
+	// print out a stack trace for each of them to let us see where they have frozen
+
+	if (deadThreads < threadPool.length) {
+	    Server.debug("Only " + deadThreads + " threads have joined, timeout expired.");
+	    Server.debug("Not waiting for the remaining " + (threadPool.length - deadThreads) + 
+			 " to finish");
 	}
     }
 
@@ -667,7 +679,7 @@ public class Server implements SessionEventListener, Runnable, ServerManager {
 			if (queue.size() > 0)
 			    next = queue.removeFirst();
 			else 
-			    queue.wait();
+			    queue.wait(500);
 		    }
 		    if (next != null) {
 			System.out.println((String) next);
