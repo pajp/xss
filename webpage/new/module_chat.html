@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server - ChatModule</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+
+  <body>
+      <p class="header">Bricole XML Session Server</p>
+      <h2>The XSS Chat Module</h2>
+      <h3>Overview</h3>
+      <p>
+	<b>Full name:</b> <code>se.bricole.xss.modules.ChatModule</code><br />
+	<b>Description:</b> The chat module lets users send messages,
+	either in public or in private, and get information about
+	other users.<br />
+	<b>XML tags</b>: <code>&lt;register/&gt;</code>,
+	<code>&lt;privmsg/&gt;</code>,
+	<code>&lt;pubmsg/&gt;</code>,
+	<code>&lt;quit/&gt;</code>,
+	<code>&lt;who/&gt;</code>,
+	<code>&lt;whois/&gt;</code>,
+	<code>&lt;echo/&gt;</code>,
+	<code>&lt;store/&gt;</code>,
+	<code>&lt;get/&gt;</code>
+      </p>
+      <h3>XML request tag documentation</h3>
+      <p>The request tags are commands that can be sent to the
+	server. The module generally generates a response tag ("ack"
+	or "nack") to indicate success or failure of the call, unless
+	they produce a custom response with data that the call
+	queried.
+      </p>
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;register [sid=""]
+	              nickname=""
+                      realname=""
+                      other=""/&gt;</code></b><br />
+	Registers a new user for chatting.<br/>
+	<br />
+	<b>sid</b>: optional sequence ID identifying the request<br />
+	<b>nickname</b>: the nickname the user wishes to use in the
+	chat<br />
+	<b>realname</b>: the user's real name <br />
+	<b>other</b>: any supplementary data <br />
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="register"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="register"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br/>
+	Error codes:<br>2: nickname already registered<br>
+	<br>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;privmsg [sid=""]
+	              to=""
+                      message=""
+                      /&gt;</code></b><br />
+	Sends a private message to another registered chat user.<br />
+	<br />
+	<b>sid</b>: optional sequence ID identifying the request<br />
+	<b>to</b>: the nickname of the user that should receive this
+	message<br />
+	<b>message</b>: the message text<br/>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="privmsg"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="privmsg"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>1: supplied "to" nickname not found<br>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;pubmsg [sid=""]
+                      message=""
+                      /&gt;</code></b><br />
+	Sends a message to all users in the chat.<br />
+	<br />
+	<b>message</b>: the message text<br/>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="pubmsg"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="pubmsg"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;quit
+                      /&gt;</code></b><br />
+	Unregisters the user. If the GenericXMLModule is loaded,
+	it will send an &lt;ack/&gt; and close the connection, so this
+	module won't.
+	<br />
+	<br />
+	<font size="+1">XML response</font><br />
+	None<br/>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;who
+                      /&gt;</code></b><br />
+	Queries the server for a list of all registered chat users.<br />
+	<br />
+	<font size="+1">XML response</font><br />
+	<b><code>&lt;who&gt;&lt;user nickname="nick1" id="id1"/&gt;
+	  &lt;user nickname="nick2" id="id2"/>[...]&lt;/who&gt;</code></b><br />
+      </p>
+
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;whois nickname=""
+                      /&gt;</code></b><br />
+	Queries the server for data about a given nickname<br
+	  />
+	<br />
+	<b>nickname</b>: the nickname of the user to query information
+	about.<br><br>
+	<font size="+1">XML response</font><br />
+	<b><code>&lt;whois id="" nickname="" realname="" other=""
+	    host="" proxy="" /&gt;</code></b><br />
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;echo [any data]
+                      /&gt;</code></b><br />
+	An arbitrary broadcast to all other connected clients. The tag
+	will be sent in whole (including sub-elements) to the other
+	clients, with the addition of "source" and "sourceid"
+	attributes appended to identify the issuer.<br /> <br />
+	
+	<font size="+1">XML response</font><br />
+	None.<br/>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;store 
+	    name=""
+	    value=""
+                      /&gt;</code></b><br />
+	Stores an arbitrary string at the server among the user's session data.<br>
+	<br />
+	<b>name</b>: the name (key) of the value to store<br>
+	<b>value</b>: the value contents<br>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="store"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="store"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;get
+	    name=""
+                      /&gt;</code></b><br />
+	Retreives a string previously stored in the user's session data.<br>
+	<br />
+	<b>name</b>: the name (key) of the value to retreive.<br>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="get" value="<i>retreived value</i>"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="get"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+
+      <h3>Asonchronous XML tag documentation</h3>
+      <p>Asynchronous XML tags are messages that are sent unsolicited
+	from the server.</p>
+      <p class="tag-doc">
+	<font size="+1">XML message</font><br />
+	<b><code>&lt;pubmsg [sid=""]
+                      message=""
+	              from=""
+                      /&gt;</code></b><br />
+	A public message sent from another user.<br />
+	<br />
+	<b>from</b>: the nickname of the message sender<br/>
+	<b>message</b>: the message text<br/>
+	<br/>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML message</font><br />
+	<b><code>&lt;privmsg [sid=""]
+                      message=""
+	              from=""
+                      /&gt;</code></b><br />
+	A private message sent from another user.<br />
+	<br />
+	<b>from</b>: the nickname of the message sender<br/>
+	<b>message</b>: the message text<br/>
+	<br/>
+      </p>
+      
+      
+
+  </body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server - GenericXMLModule</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+
+  <body>
+      <p class="header">Bricole XML Session Server</p>
+      <h2>The XSS Generic XML Module</h2>
+      <h3>Overview</h3>
+      <p>
+	<b>Full name:</b> <code>se.bricole.xss.server.GenericXMLModule</code><br />
+	<b>Description:</b>
+	Provides authentication and a few general-purpose tags.
+	<br />
+	<b>XML tags</b>: <code>&lt;auth/&gt;</code>,
+	<code>&lt;ping/&gt;</code>,
+	<code>&lt;get-status/&gt;</code>,
+	<code>&lt;quit/&gt;</code>,
+      </p>
+      <h3>XML request tag documentation</h3>
+      <p>The request tags are commands that can be sent to the
+	server. 
+      </p>
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;auth domain="<i>domain</i>"
+	    [init-challenge=""]
+	    username="<i>username</i>"
+	    {password="<i>password</i>",challenge-response="<i>challenge-response</i>"}
+                      other=""/&gt;</code></b><br />
+	Attempts an authentication to the given domain.<br>
+	<br />
+	<b>domain</b>: the authentication domain to register with<br>
+	<b>username</b>: the username<br>
+	chat<br />
+	<b>init-challenge</b>: if supplied, initiate
+	challenge-response authentication<br>
+	<b>password</b>: the user's password (if plaintext
+	authentication is used)<br>
+	<b>challenge-response</b>: MD5 sum of the password+challenge
+	(if challenge-response authentication is used) <br>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;auth-ok
+	    domain="<i>domain</i>"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;auth-err
+	    domain="<i>domain</i>"
+	    message="<i>message</i>"
+	    
+	    /&gt;</b><br/>
+	Error codes:<br>2: nickname already registered<br>
+	<br>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;privmsg [sid=""]
+	              to=""
+                      message=""
+                      /&gt;</code></b><br />
+	Sends a private message to another registered chat user.<br />
+	<br />
+	<b>sid</b>: optional sequence ID identifying the request<br />
+	<b>to</b>: the nickname of the user that should receive this
+	message<br />
+	<b>message</b>: the message text<br/>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="privmsg"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="privmsg"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>1: supplied "to" nickname not found<br>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;pubmsg [sid=""]
+                      message=""
+                      /&gt;</code></b><br />
+	Sends a message to all users in the chat.<br />
+	<br />
+	<b>message</b>: the message text<br/>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="pubmsg"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="pubmsg"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;quit
+                      /&gt;</code></b><br />
+	Unregisters the user. If the GenericXMLModule is loaded,
+	it will send an &lt;ack/&gt; and close the connection, so this
+	module won't.
+	<br />
+	<br />
+	<font size="+1">XML response</font><br />
+	None<br/>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;who
+                      /&gt;</code></b><br />
+	Queries the server for a list of all registered chat users.<br />
+	<br />
+	<font size="+1">XML response</font><br />
+	<b><code>&lt;who&gt;&lt;user nickname="nick1" id="id1"/&gt;
+	  &lt;user nickname="nick2" id="id2"/>[...]&lt;/who&gt;</code></b><br />
+      </p>
+
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;whois nickname=""
+                      /&gt;</code></b><br />
+	Queries the server for data about a given nickname<br
+	  />
+	<br />
+	<b>nickname</b>: the nickname of the user to query information
+	about.<br><br>
+	<font size="+1">XML response</font><br />
+	<b><code>&lt;whois id="" nickname="" realname="" other=""
+	    host="" proxy="" /&gt;</code></b><br />
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;echo [any data]
+                      /&gt;</code></b><br />
+	An arbitrary broadcast to all other connected clients. The tag
+	will be sent in whole to the other clients, with the addition
+	of "source" and "sourceid" attributes appended to identify the
+	issuer.<br
+	  />
+	<br />
+	
+	<font size="+1">XML response</font><br />
+	None.<br/>
+      </p>
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;store 
+	    name=""
+	    value=""
+                      /&gt;</code></b><br />
+	Stores an arbitrary string at the server among the user's session data.<br>
+	<br />
+	<b>name</b>: the name (key) of the value to store<br>
+	<b>value</b>: the value contents<br>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="store"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="store"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+
+
+      <p class="tag-doc">
+	<font size="+1">XML request</font><br />
+	<b><code>&lt;get
+	    name=""
+                      /&gt;</code></b><br />
+	Retreives a string previously stored in the user's session data.<br>
+	<br />
+	<b>name</b>: the name (key) of the value to retreive.<br>
+	<br />
+	<font size="+1">XML response</font><br />
+	On success: <b><code>&lt;ack [sid="<i>sid</i>"]
+	    tag="get" value="<i>retreived value</i>"
+	    /&gt;</code></b><br />
+	On error: <b><code>&lt;nack [sid="<i>sid</i>"]
+	    tag="get"
+	    error="<i>errorcode</i>"
+	    message="<i>message</i>"
+	    /&gt;</b><br>
+	Error codes:<br>No error codes specific to this tags.
+      </p>
+
+
+      <h3>Asonchronous XML tag documentation</h3>
+      <p>Asynchronous XML tags are messages that are sent unsolicited
+	from the server.</p>      
+      
+
+  </body>
+</html>

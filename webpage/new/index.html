@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Bricole XML Session Server</title>
+    <link rel="stylesheet" href="xss.css" />
+  </head>
+
+  <body>
+      <p class="header">Bricole XML Session Server</p>
+
+      <p class="navigation">[<a href="index.html">main</a>]
+	                    [<a href="documentation.html">documentation</a>]
+	                    [<a href="download.html">download</a>]
+	                    [<a href="copyright">copyright</a>]
+      </p>
+
+      <h2>Introduction</h2>
+      <p>
+	Bricole XSS is a server application primarily intended for use
+	together with the Macromedia Flash feature <a
+	href="http://www.macromedia.com/support/flash/action_scripts/objects/xmlsocket_object.html">XMLSocket</a>.
+	XSS makes it easy to create server-side Java-based application
+	that communicates with a Flash 5 movie through the use of a
+	persistent TCP socket and XML. The module-oriented design of
+	XSS lets developers extend its functionality to suit a rich
+	number of applications.
+	Javascript and database (JDBC) support
+	makes it an ideal platform for rapid development of advanced
+	client-server Flash applications. 
+      </p>
+      <p>
+	XSS is free for non-commercial, educational and evaluation
+	purposes. Commercial licensing is available on a per-server
+	basis, and the fee is &euro;250 (SEK 2500), and includes new
+	versions up to (but not including) 2.0.
+      </p>
+      <p>
+	While the product still is in alpha stage, it is believed to
+	be very stable. During the alpha development stages, we will
+	refine the public APIs and make sure that getting started with
+	XSS development will be easy and that the provided tools
+	behave in a consistent way.
+      </p>
+      <h2>Version 0.9 (alpha)</h2>
+      <p>
+	Bricole XSS 0.9 includes the following features:
+      <h3>Database access</h3>
+      <p>
+	The Database access module lets a user access an SQL database
+	with no programming required. SQL queries are defined in a
+	property file and executed using pre-defined XML-tags
+	&lt;db:executeQuery/&gt; and &lt;db:executeUpdate/&gt;. Their
+	results are returned to the client, transformed into XML using
+	the meta-data provided by the JDBC driver.
+      </p>
+      <h3>Javascript support</h3>
+      <p>
+	New XML tags can be defined using Javascript, and the scripts
+	have access to the same Java objects as regular Java
+	modules. The Javascript files are dynamically loaded when they
+	are put in the defined folder, and reloaded if changed.
+      </p>
+      <h3>Authentication</h3>
+      <p>
+	A generic authentication module is included, allowing the user
+	to define users and passwords in the XSS configuration
+	file. The XSS authentication mechanism allows an
+	<i>authentication domain</i> to be associated with a module,
+	and will only let users authenticated to that domain access
+	the modules protected by it. XSS provides both basic (plain
+	text) authentication and a secure challenge-response MD5
+	method which effectively protects the password from
+	eavesdropping. The AuthHandler module API makes it easy to
+	provide new authentication sources such as SQL user databases.
+      </p>
+      <h3>Chat</h3>
+      <p>
+        A simple chat module is provided, supporting private and
+	public messages, user listing and user details.
+      </p>
+    </p>
+      <br />
+      <hr noshade>
+      <br />
+      
+      <p class="footer">
+	Copyright &copy; 2001 by Rasmus Sten &lt;<a
+	  href="mailto:rasmus@bricole.se">rasmus@bricole.se</a>&gt;<br/>
+	<a href="http://www.macromedia.com/software/flash/">Flash</a>&reg; and
+	ActionScript are trademarks or registered trademarks of <a
+	  href="http://www.macromedia.com">Macromedia&reg;, Inc</a> in the Unites
+	States and/or other countries.<br/>
+	<code>$Id: index.html,v 1.6 2003/06/30 09:23:28 rasmus $</code>
+      </p>
+      
+  </body>
+</html>

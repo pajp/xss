@@ -1,0 +1,68 @@
+body {
+  margin: 2em 1em 2em 70px;
+  font-family: sans-serif;
+  color: black;
+  background: white;
+}
+
+h2 {
+  font-size: medium;
+  margin: 1em 0em 0em -1em;
+}
+
+h3 {
+  font-size: small;
+  margin: 1em 0em 0em 0em;
+}
+
+p {
+  background: white;
+  margin-top: 0.6em;
+  margin-bottom: 0.6em;
+}
+
+p.footnotes {
+  font-size: x-small;
+}
+
+p.header {
+  margin-left: -1em;
+  background: lightblue;
+  border-style: solid;
+  border-width: 2px;
+  border-color: black;
+  font-size: medium;
+}
+
+p.footer {
+  border-style: solid;
+  border-width: 2px;
+  border-color: black;
+  font-size: xx-small;
+}
+
+sup {
+  font-size: xx-small;
+}
+
+b.example { color: green; }
+
+
+pre.example {
+  background: lightgrey;
+  margin-left: 1em;
+  white-space: pre;
+}
+
+p.tag-doc { 
+  background: lightgrey;
+  margin-left: 1em;
+}
+
+
+.navigation {
+  color: black;
+  background: yellow;
+}
+
+
